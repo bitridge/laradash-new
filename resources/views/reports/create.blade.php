@@ -38,7 +38,9 @@ use App\Models\Report;
 
                                 <div>
                                     <x-input-label for="description" :value="__('Report Description')" />
-                                    <div id="description-editor" class="mt-1 block w-full min-h-[200px] bg-white border border-gray-300 rounded-md"></div>
+                                    <div id="description-editor" class="mt-1 block w-full min-h-[200px] bg-white">
+                                        {!! old('description.content') ?? '' !!}
+                                    </div>
                                     <input type="hidden" name="description" id="description">
                                     <x-input-error class="mt-2" :messages="$errors->get('description')" />
                                 </div>
@@ -104,10 +106,13 @@ use App\Models\Report;
                 background-color: white;
             }
             .ql-container {
+                border: 1px solid #d1d5db;
+                border-top: none;
                 border-bottom-left-radius: 0.375rem;
                 border-bottom-right-radius: 0.375rem;
             }
             .ql-toolbar {
+                border: 1px solid #d1d5db;
                 border-top-left-radius: 0.375rem;
                 border-top-right-radius: 0.375rem;
                 background-color: white;
@@ -118,9 +123,14 @@ use App\Models\Report;
     @push('scripts')
         <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
         <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                // Initialize Quill editor for description
-                var descriptionQuill = new Quill('#description-editor', {
+            // Initialize Quill editor for description
+            let descriptionQuill = null;
+            let sectionQuills = {};
+            let sectionCount = 0;
+
+            // Function to initialize a Quill editor
+            function initQuill(elementId, options = {}) {
+                return new Quill(elementId, {
                     theme: 'snow',
                     modules: {
                         toolbar: [
@@ -128,15 +138,18 @@ use App\Models\Report;
                             ['bold', 'italic', 'underline', 'strike'],
                             [{ 'list': 'ordered'}, { 'list': 'bullet' }],
                             [{ 'color': [] }, { 'background': [] }],
-                            ['link', 'code-block'],
+                            ['link', 'image', 'code-block'],
                             ['clean']
-                        ]
+                        ],
+                        ...options
                     },
-                    placeholder: 'Write your report description here...'
+                    placeholder: 'Start writing here...'
                 });
+            }
 
-                // Section counter for unique IDs
-                let sectionCount = 0;
+            document.addEventListener('DOMContentLoaded', function() {
+                // Initialize description editor
+                descriptionQuill = initQuill('#description-editor');
 
                 // Function to add a new section
                 window.addSection = function() {
@@ -152,7 +165,7 @@ use App\Models\Report;
                                 </div>
                                 <div>
                                     <x-input-label :value="__('Order')" />
-                                    <x-text-input name="sections[${sectionCount}][order]" type="number" class="mt-1 block w-20" value="${sectionCount}" required />
+                                    <x-text-input name="sections[${sectionCount}][order]" type="number" class="mt-1 block w-20" value="${sectionCount + 1}" required />
                                 </div>
                                 <button type="button" onclick="removeSection('${sectionId}')" class="ml-4 text-red-600 hover:text-red-800">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -177,54 +190,51 @@ use App\Models\Report;
                     container.appendChild(tempDiv.firstElementChild);
 
                     // Initialize Quill editor for the new section
-                    new Quill(`#section-editor-${sectionCount}`, {
-                        theme: 'snow',
-                        modules: {
-                            toolbar: [
-                                [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-                                ['bold', 'italic', 'underline', 'strike'],
-                                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                                ['link', 'code-block'],
-                                ['clean']
-                            ]
-                        }
-                    });
-
+                    sectionQuills[sectionId] = initQuill(`#section-editor-${sectionCount}`);
                     sectionCount++;
                 };
 
                 // Function to remove a section
                 window.removeSection = function(sectionId) {
-                    document.getElementById(sectionId).remove();
+                    const section = document.getElementById(sectionId);
+                    if (section) {
+                        // Destroy Quill instance if it exists
+                        if (sectionQuills[sectionId]) {
+                            delete sectionQuills[sectionId];
+                        }
+                        section.remove();
+                    }
                 };
 
                 // Handle form submission
                 document.querySelector('form').addEventListener('submit', function() {
-                    // Get description content
-                    document.getElementById('description').value = JSON.stringify({
-                        content: descriptionQuill.root.innerHTML,
-                        plainText: descriptionQuill.getText().trim()
-                    });
+                    // Store description content
+                    if (descriptionQuill) {
+                        document.getElementById('description').value = JSON.stringify({
+                            content: descriptionQuill.root.innerHTML,
+                            plainText: descriptionQuill.getText().trim()
+                        });
+                    }
 
-                    // Get content for each section
-                    for (let i = 0; i < sectionCount; i++) {
-                        const editor = document.querySelector(`#section-editor-${i} .ql-editor`);
-                        if (editor) {
-                            document.getElementById(`section-content-${i}`).value = JSON.stringify({
-                                content: editor.innerHTML,
-                                plainText: editor.textContent.trim()
+                    // Store section contents
+                    Object.keys(sectionQuills).forEach(sectionId => {
+                        const quill = sectionQuills[sectionId];
+                        const sectionNum = sectionId.split('-')[1];
+                        const contentInput = document.getElementById(`section-content-${sectionNum}`);
+                        if (quill && contentInput) {
+                            contentInput.value = JSON.stringify({
+                                content: quill.root.innerHTML,
+                                plainText: quill.getText().trim()
                             });
                         }
-                    }
+                    });
                 });
 
-                // If there's old content from validation error, load it
+                // Load old content if it exists
                 @if(old('description'))
                     try {
                         const oldContent = @json(old('description'));
-                        if (typeof oldContent === 'object' && oldContent.content) {
-                            descriptionQuill.root.innerHTML = oldContent.content;
-                        } else if (typeof oldContent === 'string') {
+                        if (typeof oldContent === 'string' && descriptionQuill) {
                             const parsedContent = JSON.parse(oldContent);
                             if (parsedContent.content) {
                                 descriptionQuill.root.innerHTML = parsedContent.content;
