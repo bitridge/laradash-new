@@ -54,12 +54,32 @@
 
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700">Application Logo</label>
-                                        <input type="file" name="logo" accept="image/*" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-                                        @if($settings['app']['logo'])
-                                            <div class="mt-2">
-                                                <img src="{{ $settings['app']['logo'] }}" alt="Current logo" class="h-12">
+                                        <div class="mt-1 flex items-center space-x-4">
+                                            <div class="flex-shrink-0">
+                                                @if($settings['app']['logo'])
+                                                    <img src="{{ $settings['app']['logo'] }}" 
+                                                         alt="{{ $settings['app']['name'] }}" 
+                                                         class="h-12 w-auto object-contain"
+                                                         id="current-logo">
+                                                @else
+                                                    <div class="h-12 w-12 rounded-lg bg-gray-200 flex items-center justify-center">
+                                                        <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                        </svg>
+                                                    </div>
+                                                @endif
                                             </div>
-                                        @endif
+                                            <div class="flex-grow">
+                                                <input type="file" id="logo" name="logo" accept="image/*" class="hidden" onchange="showPreview(event)">
+                                                <label for="logo" class="cursor-pointer inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25">
+                                                    {{ __('Choose Logo') }}
+                                                </label>
+                                            </div>
+                                            <div id="preview-container" class="flex-shrink-0 hidden">
+                                                <img id="preview" class="h-12 w-auto object-contain">
+                                            </div>
+                                        </div>
+                                        <x-input-error class="mt-2" :messages="$errors->get('logo')" />
                                     </div>
                                 </div>
                             </div>
@@ -197,6 +217,26 @@
             .catch(error => {
                 alert('Error sending test email: ' + error);
             });
+        }
+
+        function showPreview(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                const previewContainer = document.getElementById('preview-container');
+                const preview = document.getElementById('preview');
+                const currentLogo = document.getElementById('current-logo');
+                
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    previewContainer.classList.remove('hidden');
+                    if (currentLogo) {
+                        currentLogo.classList.add('hidden');
+                    }
+                }
+                
+                reader.readAsDataURL(file);
+            }
         }
     </script>
     @endpush
