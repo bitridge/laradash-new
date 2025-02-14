@@ -45,7 +45,7 @@ class SettingController extends Controller
     {
         $validated = $request->validate([
             'app.name' => 'required|string|max:255',
-            'app.logo' => 'nullable|image|max:1024',
+            'logo' => 'nullable|image|max:1024',
             'smtp.sender_name' => 'required|string|max:255',
             'smtp.encryption' => 'required|in:tls,ssl',
             'smtp.host' => 'required|string|max:255',
@@ -63,14 +63,26 @@ class SettingController extends Controller
         ]);
 
         // Handle logo upload
-        if ($request->hasFile('app.logo')) {
-            $path = $request->file('app.logo')->store('public/logo');
-            $validated['app']['logo'] = Storage::url($path);
+        if ($request->hasFile('logo')) {
+            // Delete old logo if it exists
+            $appSettings = Setting::get('app', []);
+            if (isset($appSettings['logo'])) {
+                $oldPath = str_replace('/storage/', 'public/', $appSettings['logo']);
+                Storage::delete($oldPath);
+            }
+
+            // Store new logo
+            $path = $request->file('logo')->store('public/logo');
+            $appSettings = $validated['app'] ?? [];
+            $appSettings['logo'] = Storage::url($path);
+            $validated['app'] = $appSettings;
         }
 
         // Save settings by group
         foreach ($validated as $group => $values) {
-            Setting::set($group, $values, $group);
+            if ($group !== 'logo') { // Skip the logo field as it's already handled
+                Setting::set($group, $values, $group);
+            }
         }
 
         return redirect()->route('settings.index')->with('success', 'Settings updated successfully.');

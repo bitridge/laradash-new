@@ -38,7 +38,7 @@ use App\Models\Report;
 
                                 <div>
                                     <x-input-label for="description" :value="__('Report Description')" />
-                                    <div id="description-editor" class="mt-1 block w-full min-h-[200px] bg-white"></div>
+                                    <div id="description-editor" class="mt-1 block w-full min-h-[200px] bg-white border border-gray-300 rounded-md"></div>
                                     <input type="hidden" name="description" id="description">
                                     <x-input-error class="mt-2" :messages="$errors->get('description')" />
                                 </div>
@@ -98,110 +98,146 @@ use App\Models\Report;
 
     @push('styles')
         <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+        <style>
+            .ql-editor {
+                min-height: 200px;
+                background-color: white;
+            }
+            .ql-container {
+                border-bottom-left-radius: 0.375rem;
+                border-bottom-right-radius: 0.375rem;
+            }
+            .ql-toolbar {
+                border-top-left-radius: 0.375rem;
+                border-top-right-radius: 0.375rem;
+                background-color: white;
+            }
+        </style>
     @endpush
 
     @push('scripts')
         <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
         <script>
-            // Initialize Quill editor for description
-            var descriptionQuill = new Quill('#description-editor', {
-                theme: 'snow',
-                modules: {
-                    toolbar: [
-                        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-                        ['bold', 'italic', 'underline', 'strike'],
-                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                        ['link', 'code-block'],
-                        ['clean']
-                    ]
-                }
-            });
-
-            // Section counter for unique IDs
-            let sectionCount = 0;
-
-            // Function to add a new section
-            function addSection() {
-                const container = document.getElementById('sections-container');
-                const sectionId = `section-${sectionCount}`;
-                
-                const sectionHtml = `
-                    <div class="bg-gray-50 p-4 rounded-lg" id="${sectionId}">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="flex-grow mr-4">
-                                <x-input-label :value="__('Section Title')" />
-                                <x-text-input name="sections[${sectionCount}][title]" type="text" class="mt-1 block w-full" required />
-                            </div>
-                            <div>
-                                <x-input-label :value="__('Order')" />
-                                <x-text-input name="sections[${sectionCount}][order]" type="number" class="mt-1 block w-20" value="${sectionCount}" required />
-                            </div>
-                            <button type="button" onclick="removeSection('${sectionId}')" class="ml-4 text-red-600 hover:text-red-800">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                            </button>
-                        </div>
-                        <div>
-                            <x-input-label :value="__('Content')" />
-                            <div id="section-editor-${sectionCount}" class="mt-1 block w-full min-h-[200px] bg-white"></div>
-                            <input type="hidden" name="sections[${sectionCount}][content]" id="section-content-${sectionCount}">
-                        </div>
-                        <div class="mt-4">
-                            <x-input-label :value="__('Section Image (Optional)')" />
-                            <input type="file" name="sections[${sectionCount}][image]" accept="image/*" class="mt-1">
-                        </div>
-                    </div>
-                `;
-                
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = sectionHtml;
-                container.appendChild(tempDiv.firstElementChild);
-
-                // Initialize Quill editor for the new section
-                new Quill(`#section-editor-${sectionCount}`, {
+            document.addEventListener('DOMContentLoaded', function() {
+                // Initialize Quill editor for description
+                var descriptionQuill = new Quill('#description-editor', {
                     theme: 'snow',
                     modules: {
                         toolbar: [
                             [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
                             ['bold', 'italic', 'underline', 'strike'],
                             [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                            [{ 'color': [] }, { 'background': [] }],
                             ['link', 'code-block'],
                             ['clean']
                         ]
+                    },
+                    placeholder: 'Write your report description here...'
+                });
+
+                // Section counter for unique IDs
+                let sectionCount = 0;
+
+                // Function to add a new section
+                window.addSection = function() {
+                    const container = document.getElementById('sections-container');
+                    const sectionId = `section-${sectionCount}`;
+                    
+                    const sectionHtml = `
+                        <div class="bg-gray-50 p-4 rounded-lg" id="${sectionId}">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="flex-grow mr-4">
+                                    <x-input-label :value="__('Section Title')" />
+                                    <x-text-input name="sections[${sectionCount}][title]" type="text" class="mt-1 block w-full" required />
+                                </div>
+                                <div>
+                                    <x-input-label :value="__('Order')" />
+                                    <x-text-input name="sections[${sectionCount}][order]" type="number" class="mt-1 block w-20" value="${sectionCount}" required />
+                                </div>
+                                <button type="button" onclick="removeSection('${sectionId}')" class="ml-4 text-red-600 hover:text-red-800">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div>
+                                <x-input-label :value="__('Content')" />
+                                <div id="section-editor-${sectionCount}" class="mt-1 block w-full min-h-[200px] bg-white"></div>
+                                <input type="hidden" name="sections[${sectionCount}][content]" id="section-content-${sectionCount}">
+                            </div>
+                            <div class="mt-4">
+                                <x-input-label :value="__('Section Image (Optional)')" />
+                                <input type="file" name="sections[${sectionCount}][image]" accept="image/*" class="mt-1">
+                            </div>
+                        </div>
+                    `;
+                    
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = sectionHtml;
+                    container.appendChild(tempDiv.firstElementChild);
+
+                    // Initialize Quill editor for the new section
+                    new Quill(`#section-editor-${sectionCount}`, {
+                        theme: 'snow',
+                        modules: {
+                            toolbar: [
+                                [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                                ['bold', 'italic', 'underline', 'strike'],
+                                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                                ['link', 'code-block'],
+                                ['clean']
+                            ]
+                        }
+                    });
+
+                    sectionCount++;
+                };
+
+                // Function to remove a section
+                window.removeSection = function(sectionId) {
+                    document.getElementById(sectionId).remove();
+                };
+
+                // Handle form submission
+                document.querySelector('form').addEventListener('submit', function() {
+                    // Get description content
+                    document.getElementById('description').value = JSON.stringify({
+                        content: descriptionQuill.root.innerHTML,
+                        plainText: descriptionQuill.getText().trim()
+                    });
+
+                    // Get content for each section
+                    for (let i = 0; i < sectionCount; i++) {
+                        const editor = document.querySelector(`#section-editor-${i} .ql-editor`);
+                        if (editor) {
+                            document.getElementById(`section-content-${i}`).value = JSON.stringify({
+                                content: editor.innerHTML,
+                                plainText: editor.textContent.trim()
+                            });
+                        }
                     }
                 });
 
-                sectionCount++;
-            }
-
-            // Function to remove a section
-            function removeSection(sectionId) {
-                document.getElementById(sectionId).remove();
-            }
-
-            // Handle form submission
-            document.querySelector('form').addEventListener('submit', function() {
-                // Get description content
-                document.getElementById('description').value = JSON.stringify({
-                    content: descriptionQuill.root.innerHTML,
-                    plainText: descriptionQuill.getText().trim()
-                });
-
-                // Get content for each section
-                for (let i = 0; i < sectionCount; i++) {
-                    const editor = document.querySelector(`#section-editor-${i} .ql-editor`);
-                    if (editor) {
-                        document.getElementById(`section-content-${i}`).value = JSON.stringify({
-                            content: editor.innerHTML,
-                            plainText: editor.textContent.trim()
-                        });
+                // If there's old content from validation error, load it
+                @if(old('description'))
+                    try {
+                        const oldContent = @json(old('description'));
+                        if (typeof oldContent === 'object' && oldContent.content) {
+                            descriptionQuill.root.innerHTML = oldContent.content;
+                        } else if (typeof oldContent === 'string') {
+                            const parsedContent = JSON.parse(oldContent);
+                            if (parsedContent.content) {
+                                descriptionQuill.root.innerHTML = parsedContent.content;
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Error loading old content:', e);
                     }
-                }
+                @endif
+
+                // Add first section by default
+                addSection();
             });
-
-            // Add first section by default
-            addSection();
         </script>
     @endpush
 </x-app-layout> 
