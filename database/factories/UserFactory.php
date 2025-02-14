@@ -29,7 +29,28 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'role' => 'user', // Default role
         ];
+    }
+
+    /**
+     * Indicate that the user is an admin.
+     */
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'admin',
+        ]);
+    }
+
+    /**
+     * Indicate that the user is an SEO provider.
+     */
+    public function seoProvider(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'seo_provider',
+        ]);
     }
 
     /**
