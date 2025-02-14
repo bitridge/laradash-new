@@ -25,7 +25,10 @@
         </div>
 
         <!-- Math Captcha -->
-        @if(session()->has('math_captcha_equation'))
+        @php
+            $captchaSettings = \App\Models\Setting::get('captcha', ['enabled' => false]);
+        @endphp
+        @if($captchaSettings['enabled'] && session()->has('math_captcha_equation'))
             <div class="mt-4">
                 <x-input-label for="captcha_answer" :value="session('math_captcha_equation')" />
                 <x-text-input id="captcha_answer" class="block mt-1 w-full"

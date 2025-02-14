@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use App\Models\Setting;
 
 class MathCaptcha
 {
@@ -15,6 +16,14 @@ class MathCaptcha
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Get captcha settings
+        $settings = Setting::get('captcha', ['enabled' => false]);
+        
+        // If captcha is not enabled, skip the middleware
+        if (!($settings['enabled'] ?? false)) {
+            return $next($request);
+        }
+
         if ($request->isMethod('post')) {
             $captchaResult = session('math_captcha_result');
             $userAnswer = $request->input('captcha_answer');
@@ -25,8 +34,8 @@ class MathCaptcha
         }
 
         // Generate new captcha for the next request
-        $num1 = rand(1, 20);
-        $num2 = rand(1, 20);
+        $num1 = rand(0, 9);
+        $num2 = rand(0, 9);
         $result = $num1 + $num2;
 
         session(['math_captcha_result' => $result]);

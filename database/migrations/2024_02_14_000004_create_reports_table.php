@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('project_id')->constrained()->cascadeOnDelete();
             $table->string('title');
-            $table->text('description');
+            $table->json('description');
             $table->foreignId('generated_by')->constrained('users')->cascadeOnDelete();
             $table->string('status')->default('draft');
             $table->timestamp('generated_at')->nullable();
