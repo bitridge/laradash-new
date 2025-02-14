@@ -15,12 +15,18 @@ class CheckRole
      */
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
-        if (!$request->user()) {
-            return redirect()->route('login');
+        if (!auth()->check()) {
+            return redirect('login');
         }
 
-        // Check if user has one of the required roles
-        if (in_array($request->user()->role, $roles)) {
+        $userRole = auth()->user()->role;
+        
+        // If roles are passed as a comma-separated string, split them
+        if (count($roles) === 1 && str_contains($roles[0], ',')) {
+            $roles = explode(',', $roles[0]);
+        }
+
+        if (in_array($userRole, $roles)) {
             return $next($request);
         }
 

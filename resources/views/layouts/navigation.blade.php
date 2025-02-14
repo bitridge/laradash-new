@@ -36,6 +36,10 @@
                                 <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
                                     {{ __('Users') }}
                                 </x-nav-link>
+
+                                <x-nav-link :href="route('settings.index')" :active="request()->routeIs('settings.*')">
+                                    {{ __('Settings') }}
+                                </x-nav-link>
                             @endif
                         @endif
                     @else
@@ -117,6 +121,10 @@
                 @if(auth()->user()->role === 'admin')
                     <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
                         {{ __('Users') }}
+                    </x-responsive-nav-link>
+
+                    <x-responsive-nav-link :href="route('settings.index')" :active="request()->routeIs('settings.*')">
+                        {{ __('Settings') }}
                     </x-responsive-nav-link>
                 @endif
             @endif

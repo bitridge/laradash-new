@@ -8,7 +8,19 @@ use App\Http\Controllers\SeoReportController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\SettingController;
 use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "web" middleware group. Make something great!
+|
+*/
 
 Route::get('/', function () {
     return view('welcome');
@@ -41,6 +53,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::resource('reports', ReportController::class);
     Route::get('reports/{report}/pdf', [ReportController::class, 'generatePdf'])->name('reports.pdf');
+
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
+        Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
+        Route::post('/settings/test-email', [SettingController::class, 'testEmail'])->name('settings.test-email');
+    });
 });
 
 require __DIR__.'/auth.php';

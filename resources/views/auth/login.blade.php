@@ -24,6 +24,18 @@
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
+        <!-- Math Captcha -->
+        @if(session()->has('math_captcha_equation'))
+            <div class="mt-4">
+                <x-input-label for="captcha_answer" :value="session('math_captcha_equation')" />
+                <x-text-input id="captcha_answer" class="block mt-1 w-full"
+                            type="number"
+                            name="captcha_answer"
+                            required />
+                <x-input-error :messages="$errors->get('captcha')" class="mt-2" />
+            </div>
+        @endif
+
         <!-- Remember Me -->
         <div class="block mt-4">
             <label for="remember_me" class="inline-flex items-center">
