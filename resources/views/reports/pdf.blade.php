@@ -114,7 +114,7 @@
         <div class="section">
             <h2 class="section-title">{{ $section->title }}</h2>
             <div class="section-content">
-                {!! $section->description['content'] ?? '' !!}
+                {!! $section->content['content'] ?? '' !!}
             </div>
             @if($section->getFirstMediaUrl('section_images'))
                 <img src="{{ $section->getFirstMediaUrl('section_images') }}" 

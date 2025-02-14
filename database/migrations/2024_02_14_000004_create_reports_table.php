@@ -23,7 +23,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('report_id')->constrained()->cascadeOnDelete();
             $table->string('title');
-            $table->text('description');
+            $table->text('content');
             $table->integer('order');
             $table->timestamps();
         });
