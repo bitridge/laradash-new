@@ -18,12 +18,12 @@ class Report extends Model implements HasMedia
         'project_id',
         'title',
         'description',
-        'generated_by',
-        'status',
         'generated_at',
+        'generated_by',
     ];
 
     protected $casts = [
+        'description' => 'array',
         'generated_at' => 'datetime',
     ];
 
@@ -51,6 +51,6 @@ class Report extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('report_images')
-            ->useDisk('public');
+             ->singleFile();
     }
 } 

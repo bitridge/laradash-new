@@ -15,8 +15,12 @@ class ReportSection extends Model implements HasMedia
     protected $fillable = [
         'report_id',
         'title',
-        'description',
+        'content',
         'order',
+    ];
+
+    protected $casts = [
+        'content' => 'array',
     ];
 
     public function report(): BelongsTo
@@ -27,6 +31,6 @@ class ReportSection extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('section_images')
-            ->useDisk('public');
+             ->singleFile();
     }
 } 

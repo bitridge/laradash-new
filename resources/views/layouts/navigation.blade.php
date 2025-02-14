@@ -12,34 +12,42 @@
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                        {{ __('Dashboard') }}
-                    </x-nav-link>
-
-                    @if(auth()->user()->role === 'admin')
-                        <x-nav-link :href="route('customers.index')" :active="request()->routeIs('customers.*')">
-                            {{ __('Customers') }}
+                    @auth
+                        <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                            {{ __('Dashboard') }}
                         </x-nav-link>
 
-                        <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
-                            {{ __('Users') }}
-                        </x-nav-link>
-                    @endif
+                        @if(auth()->user()->role === 'admin')
+                            <x-nav-link :href="route('customers.index')" :active="request()->routeIs('customers.*')">
+                                {{ __('Customers') }}
+                            </x-nav-link>
+                        @endif
 
-                    @if(in_array(auth()->user()->role, ['admin', 'seo_provider']))
-                        <x-nav-link :href="route('projects.index')" :active="request()->routeIs('projects.*')">
-                            {{ __('Projects') }}
-                        </x-nav-link>
+                        @if(in_array(auth()->user()->role, ['admin', 'seo_provider']))
+                            <x-nav-link :href="route('projects.index')" :active="request()->routeIs('projects.*')">
+                                {{ __('Projects') }}
+                            </x-nav-link>
 
-                        <x-nav-link :href="route('seo-logs.index')" :active="request()->routeIs('seo-logs.*')">
-                            {{ __('SEO Logs') }}
+                            <x-nav-link :href="route('seo-logs.index')" :active="request()->routeIs('seo-logs.*')">
+                                {{ __('SEO Logs') }}
+                            </x-nav-link>
+
+                            @if(auth()->user()->role === 'admin')
+                                <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+                                    {{ __('Users') }}
+                                </x-nav-link>
+                            @endif
+                        @endif
+                    @else
+                        <x-nav-link :href="route('login')" :active="request()->routeIs('login')">
+                            {{ __('Login') }}
                         </x-nav-link>
-                    @endif
+                    @endauth
                 </div>
             </div>
 
-            <!-- Settings Dropdown -->
-            <div class="hidden sm:flex sm:items-center sm:ms-6">
+            <div class="hidden sm:flex sm:items-center sm:ms-6 space-x-8">
+                <!-- Settings Dropdown -->
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
@@ -95,10 +103,6 @@
                 <x-responsive-nav-link :href="route('customers.index')" :active="request()->routeIs('customers.*')">
                     {{ __('Customers') }}
                 </x-responsive-nav-link>
-
-                <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
-                    {{ __('Users') }}
-                </x-responsive-nav-link>
             @endif
 
             @if(in_array(auth()->user()->role, ['admin', 'seo_provider']))
@@ -109,6 +113,12 @@
                 <x-responsive-nav-link :href="route('seo-logs.index')" :active="request()->routeIs('seo-logs.*')">
                     {{ __('SEO Logs') }}
                 </x-responsive-nav-link>
+
+                @if(auth()->user()->role === 'admin')
+                    <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+                        {{ __('Users') }}
+                    </x-responsive-nav-link>
+                @endif
             @endif
         </div>
 
