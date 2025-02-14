@@ -22,19 +22,22 @@ use App\Models\SeoLog;
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
-                    <form action="{{ route('seo-logs.store') }}" method="POST" enctype="multipart/form-data">
+                    <form method="POST" action="{{ route('seo-logs.store') }}" enctype="multipart/form-data" id="seoLogForm">
                         @csrf
 
                         <div class="mb-4">
                             <label for="project_id" class="block text-sm font-medium text-gray-700">{{ __('Project') }}</label>
-                            <select name="project_id" id="project_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            <select name="project_id" id="project_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" {{ request()->has('project_id') ? 'disabled' : '' }}>
                                 <option value="">{{ __('Select a project') }}</option>
                                 @foreach($projects as $project)
-                                    <option value="{{ $project->id }}" {{ old('project_id') == $project->id ? 'selected' : '' }}>
+                                    <option value="{{ $project->id }}" {{ (old('project_id', request('project_id')) == $project->id) ? 'selected' : '' }}>
                                         {{ $project->name }}
                                     </option>
                                 @endforeach
                             </select>
+                            @if(request()->has('project_id'))
+                                <input type="hidden" name="project_id" value="{{ request('project_id') }}">
+                            @endif
                             @error('project_id')
                                 <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                             @enderror
@@ -44,8 +47,8 @@ use App\Models\SeoLog;
                             <label for="log_type" class="block text-sm font-medium text-gray-700">{{ __('Log Type') }}</label>
                             <select name="log_type" id="log_type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                                 <option value="">{{ __('Select a type') }}</option>
-                                @foreach(SeoLog::TYPES as $type)
-                                    <option value="{{ $type }}" {{ old('log_type') == $type ? 'selected' : '' }}>
+                                @foreach(SeoLog::TYPES as $key => $type)
+                                    <option value="{{ $key }}" {{ old('log_type') == $key ? 'selected' : '' }}>
                                         {{ $type }}
                                     </option>
                                 @endforeach
@@ -57,7 +60,8 @@ use App\Models\SeoLog;
 
                         <div class="mb-4">
                             <label for="title" class="block text-sm font-medium text-gray-700">{{ __('Title') }}</label>
-                            <input type="text" name="title" id="title" value="{{ old('title') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            <input type="text" name="title" id="title" value="{{ old('title') }}" 
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                             @error('title')
                                 <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                             @enderror
@@ -65,7 +69,8 @@ use App\Models\SeoLog;
 
                         <div class="mb-4">
                             <label for="date" class="block text-sm font-medium text-gray-700">{{ __('Date') }}</label>
-                            <input type="date" name="date" id="date" value="{{ old('date', now()->format('Y-m-d')) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            <input type="date" name="date" id="date" value="{{ old('date', now()->format('Y-m-d')) }}" 
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                             @error('date')
                                 <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                             @enderror
@@ -73,7 +78,10 @@ use App\Models\SeoLog;
 
                         <div class="mb-4">
                             <label for="content" class="block text-sm font-medium text-gray-700">{{ __('Content') }}</label>
-                            <textarea name="content" id="content" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">{{ old('content') }}</textarea>
+                            <div id="quill-editor" class="mt-1 block w-full min-h-[200px] bg-white">
+                                {!! old('content.content') !!}
+                            </div>
+                            <input type="hidden" name="content" id="content">
                             @error('content')
                                 <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                             @enderror
@@ -81,7 +89,8 @@ use App\Models\SeoLog;
 
                         <div class="mb-4">
                             <label for="attachments" class="block text-sm font-medium text-gray-700">{{ __('Attachments') }}</label>
-                            <input type="file" name="attachments[]" id="attachments" multiple class="mt-1 block w-full">
+                            <input type="file" name="attachments[]" id="attachments" multiple 
+                                   class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
                             @error('attachments.*')
                                 <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                             @enderror
@@ -97,4 +106,50 @@ use App\Models\SeoLog;
             </div>
         </div>
     </div>
+
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var quill = new Quill('#quill-editor', {
+                theme: 'snow',
+                modules: {
+                    toolbar: [
+                        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        [{ 'color': [] }, { 'background': [] }],
+                        ['link', 'image', 'code-block'],
+                        ['clean']
+                    ]
+                },
+                placeholder: 'Write your SEO log content here...'
+            });
+
+            // Store Quill's content in the hidden input before form submission
+            document.querySelector('form').addEventListener('submit', function() {
+                document.getElementById('content').value = JSON.stringify({
+                    content: quill.root.innerHTML,
+                    plainText: quill.getText().trim()
+                });
+            });
+
+            // If there's old content from validation error, load it
+            @if(old('content'))
+                try {
+                    const oldContent = @json(old('content'));
+                    if (typeof oldContent === 'object' && oldContent.content) {
+                        quill.root.innerHTML = oldContent.content;
+                    } else if (typeof oldContent === 'string') {
+                        const parsedContent = JSON.parse(oldContent);
+                        if (parsedContent.content) {
+                            quill.root.innerHTML = parsedContent.content;
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error loading old content:', e);
+                }
+            @endif
+        });
+    </script>
 </x-app-layout> 

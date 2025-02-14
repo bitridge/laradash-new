@@ -5,6 +5,13 @@
                 {{ $project->name }}
             </h2>
             <div class="flex items-center space-x-4">
+                <a href="{{ route('seo-logs.create', ['project_id' => $project->id]) }}" 
+                   class="inline-flex items-center px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md font-semibold text-sm transition-colors duration-200">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    {{ __('Add SEO Log') }}
+                </a>
                 <a href="{{ route('projects.edit', $project) }}" 
                    class="inline-flex items-center px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-md font-semibold text-sm transition-colors duration-200">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -24,10 +31,11 @@
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            <!-- Project Details Card -->
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                         <!-- Project Info -->
                         <div class="md:col-span-2 space-y-6">
                             <div>
@@ -75,7 +83,7 @@
                         </div>
 
                         <!-- Sidebar -->
-                        <div class="space-y-6">
+                        <div class="md:col-span-2 space-y-6">
                             <!-- Project Logo -->
                             <div>
                                 <h4 class="text-sm font-medium text-gray-900">{{ __('Project Logo') }}</h4>
@@ -122,6 +130,25 @@
                                 </div>
                             </div>
 
+                            <!-- SEO Providers -->
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-900">{{ __('SEO Providers') }}</h4>
+                                <div class="mt-2 space-y-2">
+                                    @foreach($project->seoProviders as $provider)
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0">
+                                                <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                </svg>
+                                            </div>
+                                            <div class="ml-3">
+                                                <p class="text-sm text-gray-900">{{ $provider->name }}</p>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+
                             <!-- Delete Project -->
                             <div class="pt-6 border-t border-gray-200">
                                 <form action="{{ route('projects.destroy', $project) }}" method="POST" class="flex justify-center">
@@ -139,6 +166,92 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- SEO Logs Card -->
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-medium text-gray-900">{{ __('SEO Logs') }}</h3>
+                        <a href="{{ route('seo-logs.create', ['project_id' => $project->id]) }}" 
+                           class="inline-flex items-center px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md font-semibold text-sm transition-colors duration-200">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            {{ __('Add SEO Log') }}
+                        </a>
+                    </div>
+
+                    @if($project->seoLogs->count() > 0)
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('Date') }}</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('Type') }}</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('Title') }}</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('Created By') }}</th>
+                                        <th scope="col" class="relative px-6 py-3">
+                                            <span class="sr-only">{{ __('Actions') }}</span>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    @foreach($project->seoLogs->sortByDesc('date') as $log)
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {{ $log->date->format('M j, Y') }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                    {{ $log->log_type }}
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {{ $log->title }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {{ $log->user->name }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <a href="{{ route('seo-logs.show', $log) }}" class="text-indigo-600 hover:text-indigo-900 mr-3">{{ __('View') }}</a>
+                                                @can('update', $log)
+                                                    <a href="{{ route('seo-logs.edit', $log) }}" class="text-blue-600 hover:text-blue-900 mr-3">{{ __('Edit') }}</a>
+                                                @endcan
+                                                @can('delete', $log)
+                                                    <form action="{{ route('seo-logs.destroy', $log) }}" method="POST" class="inline">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('{{ __('Are you sure you want to delete this log?') }}')">
+                                                            {{ __('Delete') }}
+                                                        </button>
+                                                    </form>
+                                                @endcan
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <div class="text-center py-8">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <h3 class="mt-2 text-sm font-medium text-gray-900">{{ __('No SEO Logs') }}</h3>
+                            <p class="mt-1 text-sm text-gray-500">{{ __('Get started by creating a new SEO log.') }}</p>
+                            <div class="mt-6">
+                                <a href="{{ route('seo-logs.create', ['project_id' => $project->id]) }}" 
+                                   class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    {{ __('Create SEO Log') }}
+                                </a>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

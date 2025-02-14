@@ -54,7 +54,6 @@
                                 <option value="">Select a role</option>
                                 <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
                                 <option value="seo_provider" {{ old('role') == 'seo_provider' ? 'selected' : '' }}>SEO Provider</option>
-                                <option value="user" {{ old('role') == 'user' ? 'selected' : '' }}>User</option>
                             </select>
                             @error('role')
                                 <p class="mt-2 text-sm text-red-600">{{ $message }}</p>

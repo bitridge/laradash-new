@@ -84,7 +84,7 @@ use App\Models\SeoLog;
 
                         <div class="mb-4">
                             <label for="content" class="block text-sm font-medium text-gray-700">{{ __('Content') }}</label>
-                            <textarea name="content" id="content" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">{{ old('content', $seoLog->content) }}</textarea>
+                            <textarea name="content" id="content" rows="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">{{ old('content', is_array($seoLog->content) ? json_encode($seoLog->content, JSON_PRETTY_PRINT) : $seoLog->content) }}</textarea>
                             @error('content')
                                 <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                             @enderror

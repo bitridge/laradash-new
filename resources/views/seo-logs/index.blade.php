@@ -52,7 +52,7 @@ use App\Models\SeoLog;
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 @forelse($logs as $log)
-                                <tr>
+                                <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location='{{ route('seo-logs.show', $log) }}'">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-medium text-gray-900">
                                             {{ $log->title }}

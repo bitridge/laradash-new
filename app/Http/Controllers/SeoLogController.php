@@ -43,17 +43,26 @@ class SeoLogController extends BaseController
         return view('seo-logs.index', compact('logs'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $this->authorize('create', SeoLog::class);
+        
+        $projects = Project::when(auth()->user()->role === 'seo_provider', function ($query) {
+            $query->whereHas('seoProviders', function ($q) {
+                $q->where('user_id', auth()->id());
+            });
+        })->get();
 
-        $projects = Auth::user()->role === 'admin'
-            ? Project::all()
-            : Project::whereHas('seoProviders', function ($query) {
-                $query->where('user_id', Auth::id());
-            })->get();
+        // Pre-select project if project_id is provided
+        $selectedProject = null;
+        if ($request->has('project_id')) {
+            $selectedProject = $projects->find($request->project_id);
+            if (!$selectedProject) {
+                abort(404);
+            }
+        }
 
-        return view('seo-logs.create', compact('projects'));
+        return view('seo-logs.create', compact('projects', 'selectedProject'));
     }
 
     public function store(Request $request)

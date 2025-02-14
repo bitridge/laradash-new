@@ -86,4 +86,15 @@ class User extends Authenticatable
     {
         return $this->hasRole('seo_provider');
     }
+
+    /**
+     * Get the available roles.
+     */
+    public static function getAvailableRoles(): array
+    {
+        return [
+            'admin' => 'Admin',
+            'seo_provider' => 'SEO Provider'
+        ];
+    }
 }

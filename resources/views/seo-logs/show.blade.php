@@ -41,7 +41,7 @@ use App\Models\SeoLog;
                                 </div>
                                 <div>
                                     <dt class="text-sm font-medium text-gray-500">{{ __('Type') }}</dt>
-                                    <dd class="mt-1 text-sm text-gray-900">{{ $seoLog->log_type }}</dd>
+                                    <dd class="mt-1 text-sm text-gray-900">{{ SeoLog::TYPES[$seoLog->log_type] ?? $seoLog->log_type }}</dd>
                                 </div>
                                 <div>
                                     <dt class="text-sm font-medium text-gray-500">{{ __('Title') }}</dt>
@@ -61,10 +61,88 @@ use App\Models\SeoLog;
                         <div>
                             <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('Content') }}</h3>
                             <div class="prose max-w-none">
-                                {!! $seoLog->content !!}
+                                {!! $seoLog->content['content'] ?? '' !!}
                             </div>
                         </div>
                     </div>
+
+                    @if($seoLog->action_items || $seoLog->recommendations)
+                    <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        @if($seoLog->action_items)
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('Action Items') }}</h3>
+                            <div class="prose max-w-none">
+                                {!! $seoLog->action_items['content'] ?? '' !!}
+                            </div>
+                        </div>
+                        @endif
+
+                        @if($seoLog->recommendations)
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('Recommendations') }}</h3>
+                            <div class="prose max-w-none">
+                                {!! $seoLog->recommendations['content'] ?? '' !!}
+                            </div>
+                        </div>
+                        @endif
+                    </div>
+                    @endif
+
+                    @if($seoLog->keywords_targeted || $seoLog->backlinks_created || $seoLog->rankings_improvement)
+                    <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+                        @if($seoLog->keywords_targeted)
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('Keywords Targeted') }}</h3>
+                            <div class="prose max-w-none">
+                                {!! is_array($seoLog->keywords_targeted) ? implode(', ', $seoLog->keywords_targeted) : $seoLog->keywords_targeted !!}
+                            </div>
+                        </div>
+                        @endif
+
+                        @if($seoLog->backlinks_created)
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('Backlinks Created') }}</h3>
+                            <div class="prose max-w-none">
+                                @if(is_array($seoLog->backlinks_created))
+                                    <ul class="list-disc pl-4">
+                                        @foreach($seoLog->backlinks_created as $backlink)
+                                            <li>{{ $backlink }}</li>
+                                        @endforeach
+                                    </ul>
+                                @else
+                                    {!! $seoLog->backlinks_created !!}
+                                @endif
+                            </div>
+                        </div>
+                        @endif
+
+                        @if($seoLog->rankings_improvement)
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('Rankings Improvement') }}</h3>
+                            <div class="prose max-w-none">
+                                @if(is_array($seoLog->rankings_improvement))
+                                    <ul class="list-disc pl-4">
+                                        @foreach($seoLog->rankings_improvement as $ranking)
+                                            <li>{{ $ranking }}</li>
+                                        @endforeach
+                                    </ul>
+                                @else
+                                    {!! $seoLog->rankings_improvement !!}
+                                @endif
+                            </div>
+                        </div>
+                        @endif
+                    </div>
+                    @endif
+
+                    @if($seoLog->additional_notes)
+                    <div class="mt-8">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('Additional Notes') }}</h3>
+                        <div class="prose max-w-none">
+                            {{ $seoLog->additional_notes }}
+                        </div>
+                    </div>
+                    @endif
 
                     @if($seoLog->media->count() > 0)
                     <div class="mt-8">

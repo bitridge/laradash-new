@@ -15,6 +15,26 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+
+                    @if(auth()->user()->role === 'admin')
+                        <x-nav-link :href="route('customers.index')" :active="request()->routeIs('customers.*')">
+                            {{ __('Customers') }}
+                        </x-nav-link>
+
+                        <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+                            {{ __('Users') }}
+                        </x-nav-link>
+                    @endif
+
+                    @if(in_array(auth()->user()->role, ['admin', 'seo_provider']))
+                        <x-nav-link :href="route('projects.index')" :active="request()->routeIs('projects.*')">
+                            {{ __('Projects') }}
+                        </x-nav-link>
+
+                        <x-nav-link :href="route('seo-logs.index')" :active="request()->routeIs('seo-logs.*')">
+                            {{ __('SEO Logs') }}
+                        </x-nav-link>
+                    @endif
                 </div>
             </div>
 
@@ -70,6 +90,26 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+
+            @if(auth()->user()->role === 'admin')
+                <x-responsive-nav-link :href="route('customers.index')" :active="request()->routeIs('customers.*')">
+                    {{ __('Customers') }}
+                </x-responsive-nav-link>
+
+                <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+                    {{ __('Users') }}
+                </x-responsive-nav-link>
+            @endif
+
+            @if(in_array(auth()->user()->role, ['admin', 'seo_provider']))
+                <x-responsive-nav-link :href="route('projects.index')" :active="request()->routeIs('projects.*')">
+                    {{ __('Projects') }}
+                </x-responsive-nav-link>
+
+                <x-responsive-nav-link :href="route('seo-logs.index')" :active="request()->routeIs('seo-logs.*')">
+                    {{ __('SEO Logs') }}
+                </x-responsive-nav-link>
+            @endif
         </div>
 
         <!-- Responsive Settings Options -->
