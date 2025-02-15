@@ -4,9 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CustomerController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+        $this->middleware('role:admin'); // Changed from 'role:admin,seo_provider' to 'role:admin'
+    }
+
     public function index()
     {
         $customers = Customer::latest()->paginate(10);

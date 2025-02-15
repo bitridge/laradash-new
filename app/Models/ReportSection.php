@@ -5,32 +5,26 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Spatie\MediaLibrary\HasMedia;
-use Spatie\MediaLibrary\InteractsWithMedia;
 
-class ReportSection extends Model implements HasMedia
+class ReportSection extends Model
 {
-    use HasFactory, InteractsWithMedia;
+    use HasFactory;
 
     protected $fillable = [
         'report_id',
         'title',
         'content',
         'order',
+        'image_path'
     ];
 
     protected $casts = [
         'content' => 'array',
+        'order' => 'integer'
     ];
 
     public function report(): BelongsTo
     {
         return $this->belongsTo(Report::class);
-    }
-
-    public function registerMediaCollections(): void
-    {
-        $this->addMediaCollection('section_images')
-             ->singleFile();
     }
 } 

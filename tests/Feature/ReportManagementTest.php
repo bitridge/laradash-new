@@ -121,13 +121,13 @@ class ReportManagementTest extends TestCase
         $section1 = $report->sections()->where('order', 1)->first();
         $this->assertEquals('Technical Analysis', $section1->title);
         $this->assertStringContainsString('Technical Findings', $section1->content['content']);
-        $this->assertTrue($section1->getMedia('section_images')->isNotEmpty());
+        $this->assertNotNull($section1->image_path);
         
         // Check second section
         $section2 = $report->sections()->where('order', 2)->first();
         $this->assertEquals('Content Strategy', $section2->title);
         $this->assertStringContainsString('Content Recommendations', $section2->content['content']);
-        $this->assertTrue($section2->getMedia('section_images')->isNotEmpty());
+        $this->assertNotNull($section2->image_path);
         
         // SEO logs assertions
         $this->assertTrue($report->seoLogs->contains($this->seoLog));

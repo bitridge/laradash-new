@@ -56,6 +56,8 @@ Route::middleware(['auth'])->group(function () {
         
         // SEO specific routes
         Route::resource('seo-logs', SeoLogController::class);
+        Route::delete('seo-logs/{seoLog}/attachments/{mediaId}', [SeoLogController::class, 'deleteAttachment'])
+            ->name('seo-logs.delete-attachment');
         Route::resource('seo-reports', SeoReportController::class);
         Route::resource('reports', ReportController::class);
         Route::get('reports/{report}/pdf', [ReportController::class, 'generatePdf'])->name('reports.pdf');

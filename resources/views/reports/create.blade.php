@@ -209,43 +209,29 @@ use App\Models\Report;
 
                 // Handle form submission
                 document.querySelector('form').addEventListener('submit', function(e) {
-                    e.preventDefault(); // Prevent default form submission
+                    e.preventDefault();
 
                     try {
-                        console.log('Starting form submission...');
-                        
                         // Store description content
                         if (descriptionQuill) {
-                            console.log('Processing description...');
                             const descriptionContent = descriptionQuill.root.innerHTML.trim();
                             const descriptionPlainText = descriptionQuill.getText().trim();
                             
-                            console.log('Description content:', {
-                                html: descriptionContent,
-                                plainText: descriptionPlainText
-                            });
-                            
                             if (!descriptionPlainText) {
-                                console.error('Description validation failed: empty content');
                                 alert('Please enter a report description');
                                 return;
                             }
 
-                            // Set the description fields
                             document.getElementById('description-content').value = descriptionContent;
                             document.getElementById('description-plaintext').value = descriptionPlainText;
                         } else {
-                            console.error('Description Quill editor not initialized');
                             alert('Error: Description editor not initialized');
                             return;
                         }
 
                         // Check if at least one section exists
                         const sections = document.querySelectorAll('[id^="section-"]');
-                        console.log(`Found ${sections.length} sections`);
-                        
                         if (sections.length === 0) {
-                            console.error('No sections found');
                             alert('Please add at least one section to the report');
                             return;
                         }
@@ -258,52 +244,32 @@ use App\Models\Report;
                             const quill = sectionQuills[sectionId];
                             const contentInput = document.getElementById(`section-content-${sectionNum}`);
                             
-                            console.log(`Processing section ${sectionNum}...`);
-                            
                             if (quill && contentInput) {
                                 const content = quill.root.innerHTML.trim();
                                 const plainText = quill.getText().trim();
                                 
-                                console.log(`Section ${sectionNum} content:`, {
-                                    html: content,
-                                    plainText: plainText
-                                });
-                                
                                 if (!plainText) {
-                                    console.error(`Section ${sectionNum} validation failed: empty content`);
                                     alert(`Please enter content for section ${parseInt(sectionNum) + 1}`);
                                     hasError = true;
                                     return;
                                 }
 
-                                // Set the section content
-                                contentInput.value = content;
-                            } else {
-                                console.error(`Section ${sectionNum} error: editor not found or input missing`);
-                                hasError = true;
+                                contentInput.value = JSON.stringify({
+                                    content: content,
+                                    plainText: plainText
+                                });
                             }
                         });
 
                         if (hasError) {
-                            console.error('Form validation failed');
                             return;
                         }
 
-                        // Log complete form data before submission
-                        const formData = new FormData(this);
-                        const formDataObj = {};
-                        formData.forEach((value, key) => {
-                            formDataObj[key] = value;
-                        });
-                        
-                        console.log('Complete form data:', formDataObj);
-
-                        console.log('Submitting form...');
+                        // Submit the form
                         this.submit();
                     } catch (error) {
                         console.error('Form submission error:', error);
-                        console.error('Error stack:', error.stack);
-                        alert('An error occurred while submitting the form. Please check the console for details.');
+                        alert('An error occurred while submitting the form. Please try again.');
                     }
                 });
 

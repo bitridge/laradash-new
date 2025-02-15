@@ -65,7 +65,7 @@ class SeoLogController extends BaseController
     {
         $validated = $request->validate([
             'project_id' => 'required|exists:projects,id',
-            'log_type' => 'required|in:technical,content,backlink,ranking',
+            'log_type' => 'required|in:' . implode(',', array_keys(SeoLog::TYPES)),
             'title' => 'required|string|max:255',
             'date' => 'required|date',
             'content' => 'required',
@@ -140,7 +140,7 @@ class SeoLogController extends BaseController
 
         $validated = $request->validate([
             'project_id' => 'required|exists:projects,id',
-            'log_type' => 'required|in:technical,content,backlink,ranking',
+            'log_type' => 'required|in:' . implode(',', array_keys(SeoLog::TYPES)),
             'title' => 'required|string|max:255',
             'date' => 'required|date',
             'content' => 'required',
@@ -196,9 +196,19 @@ class SeoLogController extends BaseController
     {
         $this->authorize('update', $seoLog);
 
-        $media = $seoLog->media()->findOrFail($mediaId);
-        $media->delete();
+        try {
+            $media = $seoLog->media()->findOrFail($mediaId);
+            $media->delete();
 
-        return back()->with('success', 'Attachment deleted successfully.');
+            return response()->json([
+                'success' => true,
+                'message' => 'Attachment deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete attachment'
+            ], 500);
+        }
     }
 } 

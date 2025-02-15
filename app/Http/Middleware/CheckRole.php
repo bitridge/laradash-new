@@ -24,11 +24,6 @@ class CheckRole
 
         $userRole = $request->user()->role;
         
-        // Treat seo_provider as admin
-        if ($userRole === 'seo_provider') {
-            $userRole = 'admin';
-        }
-
         // Get all allowed roles by splitting any comma-separated values
         $allowedRoles = collect($roles)
             ->flatMap(fn($role) => explode(',', $role))

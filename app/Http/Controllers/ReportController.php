@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Http\UploadedFile;
 
 class ReportController extends Controller
 {
@@ -23,7 +25,7 @@ class ReportController extends Controller
     {
         $this->authorize('viewAny', Report::class);
 
-        $reports = Report::with(['project', 'generatedBy'])
+        $reports = Report::with(['project', 'generator'])
             ->when(auth()->user()->role === 'seo_provider', function ($query) {
                 $query->whereHas('project', function ($q) {
                     $q->whereHas('seoProviders', function ($q) {
@@ -65,125 +67,89 @@ class ReportController extends Controller
     {
         $this->authorize('create', Report::class);
 
+        // Check project existence and authorization first
         try {
-            // Log the incoming request data
-            \Log::info('Report creation request data:', [
-                'all' => $request->all(),
-                'files' => $request->allFiles()
-            ]);
-
-            $validated = $request->validate([
-                'project_id' => 'required|exists:projects,id',
-                'title' => 'required|string|max:255',
-                'description' => 'required|array',
-                'description.content' => 'required|string',
-                'description.plainText' => 'required|string',
-                'sections' => 'array',
-                'sections.*.title' => 'required|string|max:255',
-                'sections.*.content' => 'required|string',
-                'sections.*.order' => 'required|integer|min:0',
-                'sections.*.image' => 'nullable|image|max:2048',
-                'seo_logs' => 'array',
-                'seo_logs.*' => 'exists:seo_logs,id',
-            ]);
-
-            // Log the validated data
-            \Log::info('Validated report data:', $validated);
-
-            // Check if user can create report for this project
-            if (!Gate::allows('createForProject', [Report::class, $validated['project_id']])) {
-                \Log::warning('Unauthorized report creation attempt for project', [
-                    'user_id' => auth()->id(),
-                    'project_id' => $validated['project_id']
+            $project = Project::findOrFail($request->project_id);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // Only proceed with validation if project_id is not provided
+            if (!$request->has('project_id')) {
+                $request->validate([
+                    'project_id' => 'required|exists:projects,id',
+                    'title' => 'required|string|max:255',
+                    'description' => 'required|array',
                 ]);
-                abort(403, 'You are not authorized to create reports for this project.');
+            }
+            return back()->withErrors(['project_id' => 'Project not found.'])->withInput();
+        }
+
+        // Check if user is authorized to create reports for this project
+        if (auth()->user()->role === 'seo_provider' && !$project->seoProviders->contains(auth()->user())) {
+            abort(403, 'You are not authorized to create reports for this project.');
+        }
+
+        // Validate the request
+        $validated = $request->validate([
+            'project_id' => 'required|exists:projects,id',
+            'title' => 'required|string|max:255',
+            'description' => 'required|array',
+            'description.content' => 'required|string',
+            'description.plainText' => 'required|string',
+            'sections' => 'required|array|min:1',
+            'sections.*.title' => 'required|string|max:255',
+            'sections.*.content' => 'required|array',
+            'sections.*.content.content' => 'required|string',
+            'sections.*.content.plainText' => 'required|string',
+            'sections.*.order' => 'required|integer|min:0',
+            'sections.*.image' => 'nullable|image|max:2048',
+            'seo_logs' => 'nullable|array',
+            'seo_logs.*' => 'exists:seo_logs,id'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Create the report
+            $report = Report::create([
+                'project_id' => $validated['project_id'],
+                'title' => $validated['title'],
+                'description' => $validated['description'],
+                'generated_by' => auth()->id(),
+                'generated_at' => now(),
+            ]);
+
+            // Create sections
+            foreach ($validated['sections'] as $sectionData) {
+                $section = new ReportSection([
+                    'title' => $sectionData['title'],
+                    'content' => $sectionData['content'],
+                    'order' => $sectionData['order']
+                ]);
+
+                // Save the section to get an ID
+                $report->sections()->save($section);
+
+                // Handle image upload if present
+                if (isset($sectionData['image']) && $sectionData['image'] instanceof UploadedFile) {
+                    $path = $sectionData['image']->store('report-images', 'public');
+                    $section->image_path = $path;
+                    $section->save();
+                }
             }
 
-            try {
-                DB::beginTransaction();
-
-                // Parse section content if it's a JSON string
-                if (!empty($validated['sections'])) {
-                    foreach ($validated['sections'] as $index => &$sectionData) {
-                        if (is_string($sectionData['content'])) {
-                            $sectionData['content'] = json_decode($sectionData['content'], true);
-                            if (json_last_error() !== JSON_ERROR_NONE) {
-                                throw new \Exception('Invalid section content format for section ' . ($index + 1));
-                            }
-                        }
-                    }
-                }
-
-                $report = Report::create([
-                    'project_id' => $validated['project_id'],
-                    'title' => $validated['title'],
-                    'description' => $validated['description'],
-                    'generated_by' => auth()->id(),
-                    'generated_at' => now(),
-                ]);
-
-                // Log the created report
-                \Log::info('Report created:', ['report_id' => $report->id]);
-
-                if (!empty($validated['sections'])) {
-                    foreach ($validated['sections'] as $index => $sectionData) {
-                        $section = $report->sections()->create([
-                            'title' => $sectionData['title'],
-                            'content' => $sectionData['content'],
-                            'order' => $sectionData['order'],
-                        ]);
-
-                        // Log section creation
-                        \Log::info('Report section created:', [
-                            'section_id' => $section->id,
-                            'report_id' => $report->id
-                        ]);
-
-                        if (isset($sectionData['image']) && $sectionData['image']->isValid()) {
-                            $section->addMedia($sectionData['image'])
-                                   ->toMediaCollection('section_images');
-                            \Log::info('Section image added', [
-                                'section_id' => $section->id,
-                                'image_name' => $sectionData['image']->getClientOriginalName()
-                            ]);
-                        }
-                    }
-                }
-
-                if (!empty($validated['seo_logs'])) {
-                    $report->seoLogs()->attach($validated['seo_logs']);
-                    \Log::info('SEO logs attached to report:', [
-                        'report_id' => $report->id,
-                        'seo_log_ids' => $validated['seo_logs']
-                    ]);
-                }
-
-                DB::commit();
-
-                return redirect()->route('reports.show', $report)
-                               ->with('success', 'Report created successfully.');
-            } catch (\Exception $e) {
-                DB::rollBack();
-                \Log::error('Failed to create report:', [
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
-                ]);
-                return back()->with('error', 'Failed to create report: ' . $e->getMessage())
-                            ->withInput();
+            // Attach SEO logs if provided
+            if (!empty($validated['seo_logs'])) {
+                $report->seoLogs()->attach($validated['seo_logs']);
             }
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            \Log::warning('Report validation failed:', [
-                'errors' => $e->errors(),
-                'data' => $request->all()
-            ]);
-            throw $e;
+
+            DB::commit();
+
+            return redirect()->route('reports.show', $report)
+                ->with('success', 'Report created successfully.');
+
         } catch (\Exception $e) {
-            \Log::error('Unexpected error in report creation:', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            return back()->with('error', 'An unexpected error occurred: ' . $e->getMessage())
-                        ->withInput();
+            DB::rollBack();
+            Log::error('Failed to create report: ' . $e->getMessage());
+            return back()->withInput()->withErrors(['error' => 'Failed to create report. Please try again.']);
         }
     }
 
@@ -191,7 +157,7 @@ class ReportController extends Controller
     {
         $this->authorize('view', $report);
 
-        $report->load(['project', 'generatedBy', 'sections' => function($query) {
+        $report->load(['project', 'generator', 'sections' => function($query) {
             $query->orderBy('order');
         }, 'seoLogs']);
         
@@ -202,9 +168,16 @@ class ReportController extends Controller
     {
         $this->authorize('view', $report);
 
-        $report->load(['project', 'generatedBy', 'sections' => function($query) {
-            $query->orderBy('order');
-        }, 'seoLogs']);
+        $report->load([
+            'project.customer',
+            'generator',
+            'sections' => function($query) {
+                $query->orderBy('order');
+            },
+            'seoLogs' => function($query) {
+                $query->orderBy('date', 'desc');
+            }
+        ]);
 
         $pdf = PDF::loadView('reports.pdf', compact('report'));
         

@@ -13,7 +13,8 @@ class UserController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(CheckRole::class . ':admin');
+        $this->middleware('auth');
+        $this->middleware('role:admin');
     }
 
     public function index()
