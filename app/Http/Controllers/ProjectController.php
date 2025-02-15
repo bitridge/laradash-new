@@ -47,10 +47,9 @@ class ProjectController extends BaseController
             'customer_id' => 'required|exists:customers,id',
             'name' => 'required|string|max:255',
             'website_url' => 'required|url|max:255',
-            'description' => 'required|string',
             'status' => 'required|in:active,paused,completed',
             'start_date' => 'required|date',
-            'details' => 'required|json',
+            'details' => 'required|string',
             'logo' => 'nullable|image|max:10240',
         ]);
 

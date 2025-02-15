@@ -30,13 +30,13 @@
                         </div>
                     </div>
                     <div class="flex items-center">
-                        @auth
+                                @auth
                             <a href="{{ url('/dashboard') }}" class="text-base font-medium text-gray-700 hover:text-gray-900">Dashboard</a>
-                        @else
+                                @else
                             <a href="{{ route('login') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-150">
                                 Log in
                             </a>
-                        @endauth
+                                @endauth
                     </div>
                 </div>
             </div>
@@ -76,8 +76,8 @@
             </div>
             <div class="lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2">
                 <div class="h-56 w-full bg-gradient-to-br from-indigo-500 to-purple-600 sm:h-72 md:h-96 lg:w-full lg:h-full rounded-bl-3xl shadow-2xl"></div>
-            </div>
-        </div>
+                        </div>
+                                </div>
 
         <!-- Features Section -->
         <div id="features" class="py-24 features-pattern">
@@ -90,7 +90,7 @@
                     <p class="mt-4 max-w-2xl text-xl text-gray-500 lg:mx-auto">
                         Our comprehensive platform provides all the tools you need to manage and improve your SEO performance.
                     </p>
-                </div>
+                                        </div>
 
                 <div class="mt-20">
                     <div class="space-y-10 md:space-y-0 md:grid md:grid-cols-2 md:gap-x-8 md:gap-y-10">
@@ -128,11 +128,11 @@
                                     <div class="ml-4">
                                         <h3 class="text-lg leading-6 font-medium text-gray-900">{{ $feature['title'] }}</h3>
                                         <p class="mt-2 text-base text-gray-500">{{ $feature['description'] }}</p>
-                                    </div>
+                                </div>
                                 </div>
                             </div>
                         @endforeach
-                    </div>
+                        </div>
                 </div>
             </div>
         </div>

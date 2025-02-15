@@ -64,10 +64,13 @@
 
     <div>
         <x-input-label for="details" value="Project Details" />
-        <div id="quill-editor" class="mt-1 block w-full min-h-[200px] bg-white">
-            {!! old('details.content', $project?->details['content'] ?? '') !!}
-        </div>
-        <input type="hidden" name="details" id="details">
+        <textarea
+            id="details"
+            name="details"
+            rows="6"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            required
+        >{{ old('details', $project?->details ?? '') }}</textarea>
         <x-input-error class="mt-2" :messages="$errors->get('details')" />
     </div>
 
@@ -92,34 +95,7 @@
     </div>
 </div>
 
-<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var quill = new Quill('#quill-editor', {
-            theme: 'snow',
-            modules: {
-                toolbar: [
-                    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-                    ['bold', 'italic', 'underline', 'strike'],
-                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                    [{ 'color': [] }, { 'background': [] }],
-                    ['link', 'image', 'code-block'],
-                    ['clean']
-                ]
-            },
-            placeholder: 'Write detailed project information here...'
-        });
-
-        // Store Quill's content in the hidden input before form submission
-        document.querySelector('form').addEventListener('submit', function() {
-            document.getElementById('details').value = JSON.stringify({
-                content: quill.root.innerHTML,
-                plainText: quill.getText().trim()
-            });
-        });
-    });
-
     // Logo preview functionality
     function showPreview(event) {
         const file = event.target.files[0];
