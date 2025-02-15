@@ -70,7 +70,31 @@
                     </div>
 
                     <div class="mt-8">
-                        <h3 class="text-lg font-medium text-gray-900">{{ __('Projects') }}</h3>
+                        <h3 class="text-lg font-medium text-gray-900">{{ __('Assigned SEO Providers') }}</h3>
+                        <div class="mt-4">
+                            @if($customer->seoProviders->count() > 0)
+                                <div class="flex flex-wrap gap-2">
+                                    @foreach($customer->seoProviders as $provider)
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800">
+                                            {{ $provider->name }}
+                                            <span class="ml-2 text-xs text-indigo-600">{{ $provider->email }}</span>
+                                        </span>
+                                    @endforeach
+                                </div>
+                            @else
+                                <p class="text-sm text-gray-500">{{ __('No SEO providers assigned to this customer.') }}</p>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="mt-8">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-medium text-gray-900">{{ __('Projects') }}</h3>
+                            <a href="{{ route('projects.create', ['customer_id' => $customer->id]) }}" 
+                               class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700">
+                                {{ __('Add Project') }}
+                            </a>
+                        </div>
                         @if($customer->projects->count() > 0)
                             <div class="mt-4 overflow-x-auto">
                                 <table class="min-w-full divide-y divide-gray-200">
@@ -80,15 +104,37 @@
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Website</th>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SEO Providers</th>
                                         </tr>
                                     </thead>
                                     <tbody class="bg-white divide-y divide-gray-200">
                                         @foreach($customer->projects as $project)
-                                            <tr>
+                                            <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location='{{ route('projects.show', $project) }}'">
                                                 <td class="px-6 py-4 whitespace-nowrap">{{ $project->name }}</td>
-                                                <td class="px-6 py-4 whitespace-nowrap">{{ $project->website_url }}</td>
-                                                <td class="px-6 py-4 whitespace-nowrap">{{ $project->status }}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <a href="{{ $project->website_url }}" target="_blank" class="text-indigo-600 hover:text-indigo-900" onclick="event.stopPropagation();">
+                                                        {{ $project->website_url }}
+                                                    </a>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                                        @if($project->status === 'active') bg-green-100 text-green-800
+                                                        @elseif($project->status === 'pending') bg-yellow-100 text-yellow-800
+                                                        @else bg-red-100 text-red-800
+                                                        @endif">
+                                                        {{ ucfirst($project->status) }}
+                                                    </span>
+                                                </td>
                                                 <td class="px-6 py-4 whitespace-nowrap">{{ $project->start_date->format('Y-m-d') }}</td>
+                                                <td class="px-6 py-4">
+                                                    <div class="flex flex-wrap gap-1">
+                                                        @foreach($project->seoProviders as $provider)
+                                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                                                {{ $provider->name }}
+                                                            </span>
+                                                        @endforeach
+                                                    </div>
+                                                </td>
                                             </tr>
                                         @endforeach
                                     </tbody>

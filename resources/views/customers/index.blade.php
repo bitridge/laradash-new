@@ -28,10 +28,11 @@
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">Customer</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">Customer</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SEO Providers</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
@@ -71,6 +72,17 @@
                                             {{ $customer->phone ?? '-' }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                            <div class="flex flex-wrap gap-2">
+                                                @forelse($customer->seoProviders as $provider)
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                                        {{ $provider->name }}
+                                                    </span>
+                                                @empty
+                                                    <span class="text-gray-400">No providers assigned</span>
+                                                @endforelse
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                             <div class="flex items-center space-x-4">
                                                 <a href="{{ route('customers.show', $customer) }}" 
                                                    class="text-indigo-600 hover:text-indigo-900 flex items-center">
@@ -106,7 +118,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="px-6 py-4 text-center text-gray-500 text-sm">
+                                        <td colspan="6" class="px-6 py-4 text-center text-gray-500 text-sm">
                                             No customers found. 
                                             <a href="{{ route('customers.create') }}" class="text-indigo-600 hover:text-indigo-900">Add your first customer</a>
                                         </td>

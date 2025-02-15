@@ -1,4 +1,4 @@
-@props(['customer' => null])
+@props(['customer' => null, 'seoProviders' => []])
 
 <div class="space-y-6">
     <div>
@@ -56,6 +56,20 @@
         <x-input-label for="address" value="Address" />
         <textarea id="address" name="address" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('address', $customer?->address) }}</textarea>
         <x-input-error class="mt-2" :messages="$errors->get('address')" />
+    </div>
+
+    <div>
+        <x-input-label for="seo_providers" value="Assigned SEO Providers" />
+        <select id="seo_providers" name="seo_provider_ids[]" multiple class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            @foreach($seoProviders as $provider)
+                <option value="{{ $provider->id }}" 
+                    {{ in_array($provider->id, old('seo_provider_ids', $customer?->seoProviders->pluck('id')->toArray() ?? [])) ? 'selected' : '' }}>
+                    {{ $provider->name }}
+                </option>
+            @endforeach
+        </select>
+        <x-input-error class="mt-2" :messages="$errors->get('seo_provider_ids')" />
+        <p class="mt-2 text-sm text-gray-500">Hold Ctrl (Windows) or Cmd (Mac) to select multiple providers</p>
     </div>
 </div>
 

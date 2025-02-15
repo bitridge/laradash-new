@@ -12,7 +12,7 @@
                     <form method="POST" action="{{ route('customers.store') }}" enctype="multipart/form-data" class="mt-6 space-y-6">
                         @csrf
 
-                        <x-customer-form />
+                        <x-customer-form :seoProviders="$seoProviders" />
 
                         <div class="flex items-center gap-4">
                             <x-primary-button>{{ __('Save') }}</x-primary-button>

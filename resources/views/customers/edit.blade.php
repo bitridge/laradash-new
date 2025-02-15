@@ -13,10 +13,10 @@
                         @csrf
                         @method('PUT')
 
-                        <x-customer-form :customer="$customer" />
+                        <x-customer-form :customer="$customer" :seoProviders="$seoProviders" />
 
                         <div class="flex items-center gap-4">
-                            <x-primary-button>{{ __('Save Changes') }}</x-primary-button>
+                            <x-primary-button>{{ __('Save') }}</x-primary-button>
                             <a href="{{ route('customers.index') }}" class="text-gray-600 hover:text-gray-900">{{ __('Cancel') }}</a>
                         </div>
                     </form>
