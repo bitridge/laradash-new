@@ -25,7 +25,12 @@ class ReportPolicy
      */
     public function view(User $user, Report $report): bool
     {
-        return in_array($user->role, ['admin', 'seo_provider']);
+        if ($user->role === 'admin') {
+            return true;
+        }
+
+        return $user->role === 'seo_provider' && 
+            $report->project->customer->seoProviders()->where('users.id', $user->id)->exists();
     }
 
     /**
@@ -41,7 +46,17 @@ class ReportPolicy
      */
     public function createForProject(User $user, int $projectId): bool
     {
-        return in_array($user->role, ['admin', 'seo_provider']);
+        if ($user->role === 'admin') {
+            return true;
+        }
+
+        return $user->role === 'seo_provider' && 
+            Project::where('id', $projectId)
+                ->whereHas('customer', function ($query) use ($user) {
+                    $query->whereHas('seoProviders', function ($q) use ($user) {
+                        $q->where('users.id', $user->id);
+                    });
+                })->exists();
     }
 
     /**
@@ -49,7 +64,12 @@ class ReportPolicy
      */
     public function update(User $user, Report $report): bool
     {
-        return in_array($user->role, ['admin', 'seo_provider']);
+        if ($user->role === 'admin') {
+            return true;
+        }
+
+        return $user->role === 'seo_provider' && 
+            $report->project->customer->seoProviders()->where('users.id', $user->id)->exists();
     }
 
     /**
@@ -57,6 +77,11 @@ class ReportPolicy
      */
     public function delete(User $user, Report $report): bool
     {
-        return in_array($user->role, ['admin', 'seo_provider']);
+        if ($user->role === 'admin') {
+            return true;
+        }
+
+        return $user->role === 'seo_provider' && 
+            $report->project->customer->seoProviders()->where('users.id', $user->id)->exists();
     }
 } 

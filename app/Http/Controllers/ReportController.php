@@ -43,113 +43,106 @@ class ReportController extends Controller
     {
         $this->authorize('create', Report::class);
 
-        // Validate project_id is provided
-        $request->validate([
-            'project_id' => 'required|exists:projects,id'
-        ]);
+        $query = Project::with('customer');
+        
+        if (auth()->user()->role === 'seo_provider') {
+            $query->whereHas('customer', function ($q) {
+                $q->whereHas('seoProviders', function ($sq) {
+                    $sq->where('users.id', auth()->id());
+                });
+            });
+        }
+        
+        $projects = $query->get();
+        $seoLogs = collect(); // Initialize empty collection
 
-        // Check if user can create report for this project
-        if (!Gate::allows('createForProject', [Report::class, $request->project_id])) {
-            abort(403, 'You are not authorized to create reports for this project.');
+        // Pre-select project if project_id is provided
+        $selectedProject = null;
+        if ($request->has('project_id')) {
+            $selectedProject = $projects->find($request->project_id);
+            if (!$selectedProject) {
+                abort(404);
+            }
+            // Check if user can create report for this project
+            $this->authorize('createForProject', [Report::class, $request->project_id]);
+
+            // Get SEO logs for the selected project
+            $seoLogs = SeoLog::where('project_id', $request->project_id)
+                ->when(auth()->user()->role === 'seo_provider', function ($query) {
+                    $query->where('user_id', auth()->id());
+                })
+                ->latest()
+                ->get();
         }
 
-        $projects = Project::all();
-        $seoLogs = SeoLog::when($request->project_id, function ($query, $projectId) {
-                return $query->where('project_id', $projectId);
-            })
-            ->latest()
-            ->get();
-
-        return view('reports.create', compact('projects', 'seoLogs'));
+        return view('reports.create', compact('projects', 'selectedProject', 'seoLogs'));
     }
 
     public function store(Request $request)
     {
         $this->authorize('create', Report::class);
-
-        // Check project existence and authorization first
-        try {
-            $project = Project::findOrFail($request->project_id);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            // Only proceed with validation if project_id is not provided
-            if (!$request->has('project_id')) {
-                $request->validate([
-                    'project_id' => 'required|exists:projects,id',
-                    'title' => 'required|string|max:255',
-                    'description' => 'required|array',
-                ]);
-            }
-            return back()->withErrors(['project_id' => 'Project not found.'])->withInput();
-        }
-
-        // Check if user is authorized to create reports for this project
-        if (auth()->user()->role === 'seo_provider' && !$project->seoProviders->contains(auth()->user())) {
-            abort(403, 'You are not authorized to create reports for this project.');
-        }
-
-        // Validate the request
+        
         $validated = $request->validate([
             'project_id' => 'required|exists:projects,id',
             'title' => 'required|string|max:255',
-            'description' => 'required|array',
-            'description.content' => 'required|string',
-            'description.plainText' => 'required|string',
+            'description' => 'required|string',
             'sections' => 'required|array|min:1',
             'sections.*.title' => 'required|string|max:255',
-            'sections.*.content' => 'required|array',
-            'sections.*.content.content' => 'required|string',
-            'sections.*.content.plainText' => 'required|string',
+            'sections.*.content' => 'required|string',
             'sections.*.order' => 'required|integer|min:0',
             'sections.*.image' => 'nullable|image|max:2048',
-            'seo_logs' => 'nullable|array',
-            'seo_logs.*' => 'exists:seo_logs,id'
+            'seo_log_ids' => 'nullable|array',
+            'seo_log_ids.*' => 'exists:seo_logs,id'
         ]);
+
+        // Check if user can create report for this project
+        $this->authorize('createForProject', [Report::class, $validated['project_id']]);
 
         try {
             DB::beginTransaction();
 
-            // Create the report
+            // Parse the description JSON
+            $description = json_decode($validated['description'], true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new \Exception('Invalid description format');
+            }
+
             $report = Report::create([
                 'project_id' => $validated['project_id'],
                 'title' => $validated['title'],
-                'description' => $validated['description'],
+                'description' => $description,
                 'generated_by' => auth()->id(),
                 'generated_at' => now(),
             ]);
 
-            // Create sections
             foreach ($validated['sections'] as $sectionData) {
-                $section = new ReportSection([
+                $section = $report->sections()->create([
                     'title' => $sectionData['title'],
-                    'content' => $sectionData['content'],
+                    'content' => [
+                        'content' => $sectionData['content'],
+                        'plainText' => strip_tags($sectionData['content'])
+                    ],
                     'order' => $sectionData['order']
                 ]);
 
-                // Save the section to get an ID
-                $report->sections()->save($section);
-
-                // Handle image upload if present
-                if (isset($sectionData['image']) && $sectionData['image'] instanceof UploadedFile) {
-                    $path = $sectionData['image']->store('report-images', 'public');
-                    $section->image_path = $path;
+                if (isset($sectionData['image']) && $sectionData['image']) {
+                    $section->image_path = $sectionData['image']->store('report-sections', 'public');
                     $section->save();
                 }
             }
 
-            // Attach SEO logs if provided
-            if (!empty($validated['seo_logs'])) {
-                $report->seoLogs()->attach($validated['seo_logs']);
+            if (!empty($validated['seo_log_ids'])) {
+                $report->seoLogs()->attach($validated['seo_log_ids']);
             }
 
             DB::commit();
 
             return redirect()->route('reports.show', $report)
                 ->with('success', 'Report created successfully.');
-
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Failed to create report: ' . $e->getMessage());
-            return back()->withInput()->withErrors(['error' => 'Failed to create report. Please try again.']);
+            return back()->withInput()
+                ->with('error', 'Failed to create report. ' . $e->getMessage());
         }
     }
 

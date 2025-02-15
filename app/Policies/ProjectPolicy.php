@@ -24,7 +24,12 @@ class ProjectPolicy
      */
     public function view(User $user, Project $project): bool
     {
-        return in_array($user->role, ['admin', 'seo_provider']);
+        if ($user->role === 'admin') {
+            return true;
+        }
+
+        return $user->role === 'seo_provider' && 
+            $project->customer->seoProviders()->where('users.id', $user->id)->exists();
     }
 
     /**
@@ -40,7 +45,12 @@ class ProjectPolicy
      */
     public function update(User $user, Project $project): bool
     {
-        return in_array($user->role, ['admin', 'seo_provider']);
+        if ($user->role === 'admin') {
+            return true;
+        }
+
+        return $user->role === 'seo_provider' && 
+            $project->customer->seoProviders()->where('users.id', $user->id)->exists();
     }
 
     /**
@@ -48,6 +58,11 @@ class ProjectPolicy
      */
     public function delete(User $user, Project $project): bool
     {
-        return in_array($user->role, ['admin', 'seo_provider']);
+        if ($user->role === 'admin') {
+            return true;
+        }
+
+        return $user->role === 'seo_provider' && 
+            $project->customer->seoProviders()->where('users.id', $user->id)->exists();
     }
 } 

@@ -25,7 +25,12 @@ class SeoLogPolicy
      */
     public function view(User $user, SeoLog $seoLog): bool
     {
-        return in_array($user->role, ['admin', 'seo_provider']);
+        if ($user->role === 'admin') {
+            return true;
+        }
+
+        return $user->role === 'seo_provider' && 
+            $seoLog->project->customer->seoProviders()->where('users.id', $user->id)->exists();
     }
 
     /**
@@ -41,7 +46,12 @@ class SeoLogPolicy
      */
     public function update(User $user, SeoLog $seoLog): bool
     {
-        return in_array($user->role, ['admin', 'seo_provider']);
+        if ($user->role === 'admin') {
+            return true;
+        }
+
+        return $user->role === 'seo_provider' && 
+            $seoLog->project->customer->seoProviders()->where('users.id', $user->id)->exists();
     }
 
     /**
@@ -49,7 +59,12 @@ class SeoLogPolicy
      */
     public function delete(User $user, SeoLog $seoLog): bool
     {
-        return in_array($user->role, ['admin', 'seo_provider']);
+        if ($user->role === 'admin') {
+            return true;
+        }
+
+        return $user->role === 'seo_provider' && 
+            $seoLog->project->customer->seoProviders()->where('users.id', $user->id)->exists();
     }
 
     /**
@@ -63,8 +78,10 @@ class SeoLogPolicy
 
         return $user->role === 'seo_provider' && 
             Project::where('id', $projectId)
-                ->whereHas('seoProviders', function ($query) use ($user) {
-                    $query->where('user_id', $user->id);
+                ->whereHas('customer', function ($query) use ($user) {
+                    $query->whereHas('seoProviders', function ($q) use ($user) {
+                        $q->where('users.id', $user->id);
+                    });
                 })->exists();
     }
 } 

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class Report extends Model implements HasMedia
 {
@@ -27,6 +28,25 @@ class Report extends Model implements HasMedia
         'description' => 'array',
         'generated_at' => 'datetime'
     ];
+
+    protected function description(): Attribute
+    {
+        return Attribute::make(
+            get: function ($value) {
+                $value = is_string($value) ? json_decode($value, true) : $value;
+                return $value;
+            },
+            set: function ($value) {
+                if (is_string($value)) {
+                    return [
+                        'content' => $value,
+                        'plainText' => strip_tags($value)
+                    ];
+                }
+                return $value;
+            }
+        );
+    }
 
     public function project(): BelongsTo
     {

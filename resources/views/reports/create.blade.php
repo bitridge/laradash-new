@@ -41,8 +41,7 @@ use App\Models\Report;
                                     <div id="description-editor" class="mt-1 block w-full min-h-[200px] bg-white">
                                         {!! old('description.content') ?? '' !!}
                                     </div>
-                                    <input type="hidden" name="description[content]" id="description-content">
-                                    <input type="hidden" name="description[plainText]" id="description-plaintext">
+                                    <input type="hidden" name="description" id="description-input">
                                     <x-input-error class="mt-2" :messages="$errors->get('description')" />
                                 </div>
                             </div>
@@ -222,8 +221,12 @@ use App\Models\Report;
                                 return;
                             }
 
-                            document.getElementById('description-content').value = descriptionContent;
-                            document.getElementById('description-plaintext').value = descriptionPlainText;
+                            // Set the description input value
+                            const descriptionData = {
+                                content: descriptionContent,
+                                plainText: descriptionPlainText
+                            };
+                            document.getElementById('description-input').value = JSON.stringify(descriptionData);
                         } else {
                             alert('Error: Description editor not initialized');
                             return;
@@ -254,10 +257,7 @@ use App\Models\Report;
                                     return;
                                 }
 
-                                contentInput.value = JSON.stringify({
-                                    content: content,
-                                    plainText: plainText
-                                });
+                                contentInput.value = content;
                             }
                         });
 

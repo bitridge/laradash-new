@@ -26,8 +26,10 @@ class ProjectController extends BaseController
         $query = Project::with(['customer', 'seoProviders']);
         
         if (Auth::user()->role === 'seo_provider') {
-            $query->whereHas('seoProviders', function ($q) {
-                $q->where('user_id', Auth::id());
+            $query->whereHas('customer', function ($q) {
+                $q->whereHas('seoProviders', function ($sq) {
+                    $sq->where('users.id', Auth::id());
+                });
             });
         }
         
@@ -37,12 +39,24 @@ class ProjectController extends BaseController
 
     public function create()
     {
-        $customers = Customer::orderBy('name')->get();
+        $this->authorize('create', Project::class);
+        
+        $query = Customer::query();
+        
+        if (Auth::user()->role === 'seo_provider') {
+            $query->whereHas('seoProviders', function ($q) {
+                $q->where('users.id', Auth::id());
+            });
+        }
+        
+        $customers = $query->orderBy('name')->get();
         return view('projects.create', compact('customers'));
     }
 
     public function store(Request $request)
     {
+        $this->authorize('create', Project::class);
+
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
             'name' => 'required|string|max:255',
@@ -96,31 +110,29 @@ class ProjectController extends BaseController
 
     public function show(Project $project)
     {
-        if (Auth::user()->role === 'seo_provider' && 
-            !$project->seoProviders()->where('user_id', Auth::id())->exists()) {
-            abort(403, 'Unauthorized action.');
-        }
-
+        $this->authorize('view', $project);
         return view('projects.show', compact('project'));
     }
 
     public function edit(Project $project)
     {
-        if (Auth::user()->role === 'seo_provider' && 
-            !$project->seoProviders()->where('user_id', Auth::id())->exists()) {
-            abort(403, 'Unauthorized action.');
-        }
+        $this->authorize('update', $project);
 
-        $customers = Customer::orderBy('name')->get();
+        $query = Customer::query();
+        
+        if (Auth::user()->role === 'seo_provider') {
+            $query->whereHas('seoProviders', function ($q) {
+                $q->where('users.id', Auth::id());
+            });
+        }
+        
+        $customers = $query->orderBy('name')->get();
         return view('projects.edit', compact('project', 'customers'));
     }
 
     public function update(Request $request, Project $project)
     {
-        if (Auth::user()->role === 'seo_provider' && 
-            !$project->seoProviders()->where('user_id', Auth::id())->exists()) {
-            abort(403, 'Unauthorized action.');
-        }
+        $this->authorize('update', $project);
 
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
@@ -171,11 +183,8 @@ class ProjectController extends BaseController
 
     public function destroy(Project $project)
     {
-        if (Auth::user()->role === 'seo_provider' && 
-            !$project->seoProviders()->where('user_id', Auth::id())->exists()) {
-            abort(403, 'Unauthorized action.');
-        }
-
+        $this->authorize('delete', $project);
+        
         $project->delete();
 
         return redirect()->route('projects.index')
@@ -187,8 +196,10 @@ class ProjectController extends BaseController
         $query = $customer->projects()->with('seoProviders');
 
         if (Auth::user()->role === 'seo_provider') {
-            $query->whereHas('seoProviders', function ($q) {
-                $q->where('user_id', Auth::id());
+            $query->whereHas('customer', function ($q) {
+                $q->whereHas('seoProviders', function ($sq) {
+                    $sq->where('users.id', Auth::id());
+                });
             });
         }
 

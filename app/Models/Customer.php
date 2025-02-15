@@ -48,15 +48,45 @@ class Customer extends Model implements HasMedia
             });
     }
 
+    /**
+     * Sync all projects with the customer's SEO providers
+     */
+    public function syncProjectsWithSeoProviders(): void
+    {
+        $seoProviderIds = $this->seoProviders()->pluck('users.id')->toArray();
+        $this->load('projects'); // Ensure projects are loaded
+        foreach ($this->projects as $project) {
+            $project->seoProviders()->sync($seoProviderIds);
+        }
+    }
+
     protected static function boot()
     {
         parent::boot();
 
-        // When a customer is assigned to a SEO provider, assign all projects to them
+        // When a customer is updated
         static::updated(function ($customer) {
-            $seoProviderIds = $customer->seoProviders->pluck('id');
-            foreach ($customer->projects as $project) {
-                $project->seoProviders()->sync($seoProviderIds);
+            $customer->syncProjectsWithSeoProviders();
+        });
+
+        // When SEO providers are attached or detached
+        static::saved(function ($customer) {
+            if ($customer->wasChanged()) {
+                $customer->load('seoProviders'); // Ensure we have fresh data
+                $customer->syncProjectsWithSeoProviders();
+            }
+        });
+
+        // Listen to the pivot table events
+        static::$dispatcher->listen('eloquent.saved: *', function ($event, $models) {
+            if (isset($models[0]) && $models[0] instanceof \Illuminate\Database\Eloquent\Relations\Pivot) {
+                $pivot = $models[0];
+                if ($pivot->getTable() === 'customer_user') {
+                    $customer = Customer::with(['projects', 'seoProviders'])->find($pivot->customer_id);
+                    if ($customer) {
+                        $customer->syncProjectsWithSeoProviders();
+                    }
+                }
             }
         });
     }

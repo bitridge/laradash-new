@@ -1,97 +1,111 @@
-@extends('layouts.app')
+<x-app-layout>
+    <x-slot name="header">
+        <div class="flex justify-between items-center">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                {{ __('Edit SEO Log') }}
+            </h2>
+            <a href="{{ route('seo-logs.index') }}" 
+               class="inline-flex items-center px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md font-semibold text-sm transition-colors duration-200">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+                </svg>
+                {{ __('Back to Logs') }}
+            </a>
+        </div>
+    </x-slot>
 
-@section('content')
-<div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="max-w-7xl mx-auto">
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-            <div class="p-6">
-                <form action="{{ route('seo-logs.update', $seoLog) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
-                    @csrf
-                    @method('PUT')
+    <div class="py-12">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6">
+                    <form action="{{ route('seo-logs.update', $seoLog) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+                        @csrf
+                        @method('PUT')
 
-                    <!-- Project Selection -->
-                    <div>
-                        <x-input-label for="project_id" :value="__('Project')" />
-                        <select id="project_id" name="project_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
-                            @foreach($projects as $project)
-                                <option value="{{ $project->id }}" {{ $seoLog->project_id == $project->id ? 'selected' : '' }}>
-                                    {{ $project->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <x-input-error :messages="$errors->get('project_id')" class="mt-2" />
-                    </div>
-
-                    <!-- Log Type -->
-                    <div>
-                        <x-input-label for="log_type" :value="__('Log Type')" />
-                        <select id="log_type" name="log_type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
-                            @foreach(App\Models\SeoLog::TYPES as $value => $label)
-                                <option value="{{ $value }}" {{ $seoLog->log_type == $value ? 'selected' : '' }}>
-                                    {{ $label }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <x-input-error :messages="$errors->get('log_type')" class="mt-2" />
-                    </div>
-
-                    <!-- Title -->
-                    <div>
-                        <x-input-label for="title" :value="__('Title')" />
-                        <x-text-input id="title" name="title" type="text" class="mt-1 block w-full" :value="old('title', $seoLog->title)" required />
-                        <x-input-error :messages="$errors->get('title')" class="mt-2" />
-                    </div>
-
-                    <!-- Date -->
-                    <div>
-                        <x-input-label for="date" :value="__('Date')" />
-                        <x-text-input id="date" name="date" type="date" class="mt-1 block w-full" :value="old('date', $seoLog->date->format('Y-m-d'))" required />
-                        <x-input-error :messages="$errors->get('date')" class="mt-2" />
-                    </div>
-
-                    <!-- Content -->
-                    <div>
-                        <x-input-label for="content" :value="__('Content')" />
-                        <div id="content-editor" class="mt-1 block w-full min-h-[200px] bg-white">
-                            {!! old('content.content', $seoLog->content['content'] ?? '') !!}
-                        </div>
-                        <input type="hidden" name="content" id="content-input">
-                        <x-input-error :messages="$errors->get('content')" class="mt-2" />
-                    </div>
-
-                    <!-- Attachments -->
-                    <div>
-                        <x-input-label :value="__('Current Attachments')" />
-                        <div class="mt-2 space-y-2">
-                            @foreach($seoLog->getMedia('attachments') as $media)
-                                <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
-                                    <span>{{ $media->file_name }}</span>
-                                    <button type="button" onclick="deleteAttachment({{ $media->id }})" class="text-red-600 hover:text-red-800">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
-                                    </button>
-                                </div>
-                            @endforeach
+                        <!-- Project Selection -->
+                        <div>
+                            <x-input-label for="project_id" :value="__('Project')" />
+                            <select id="project_id" name="project_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+                                @foreach($projects as $project)
+                                    <option value="{{ $project->id }}" {{ $seoLog->project_id == $project->id ? 'selected' : '' }}>
+                                        {{ $project->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('project_id')" class="mt-2" />
                         </div>
 
-                        <div class="mt-4">
-                            <x-input-label for="attachments" :value="__('Add Attachments')" />
-                            <input type="file" name="attachments[]" id="attachments" multiple class="mt-1 block w-full" />
-                            <x-input-error :messages="$errors->get('attachments')" class="mt-2" />
+                        <!-- Log Type -->
+                        <div>
+                            <x-input-label for="log_type" :value="__('Log Type')" />
+                            <select id="log_type" name="log_type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+                                @foreach(App\Models\SeoLog::TYPES as $value => $label)
+                                    <option value="{{ $value }}" {{ $seoLog->log_type == $value ? 'selected' : '' }}>
+                                        {{ $label }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('log_type')" class="mt-2" />
                         </div>
-                    </div>
 
-                    <div class="flex justify-end">
-                        <x-primary-button>
-                            {{ __('Update Log') }}
-                        </x-primary-button>
-                    </div>
-                </form>
+                        <!-- Title -->
+                        <div>
+                            <x-input-label for="title" :value="__('Title')" />
+                            <x-text-input id="title" name="title" type="text" class="mt-1 block w-full" :value="old('title', $seoLog->title)" required />
+                            <x-input-error :messages="$errors->get('title')" class="mt-2" />
+                        </div>
+
+                        <!-- Date -->
+                        <div>
+                            <x-input-label for="date" :value="__('Date')" />
+                            <x-text-input id="date" name="date" type="date" class="mt-1 block w-full" :value="old('date', $seoLog->date->format('Y-m-d'))" required />
+                            <x-input-error :messages="$errors->get('date')" class="mt-2" />
+                        </div>
+
+                        <!-- Content -->
+                        <div>
+                            <x-input-label for="content" :value="__('Content')" />
+                            <div id="content-editor" class="mt-1 block w-full min-h-[200px] bg-white">
+                                {!! old('content.content', $seoLog->content['content'] ?? '') !!}
+                            </div>
+                            <input type="hidden" name="content" id="content-input">
+                            <x-input-error :messages="$errors->get('content')" class="mt-2" />
+                        </div>
+
+                        <!-- Attachments -->
+                        <div>
+                            <x-input-label :value="__('Current Attachments')" />
+                            <div class="mt-2 space-y-2">
+                                @foreach($seoLog->getMedia('attachments') as $media)
+                                    <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                        <span>{{ $media->file_name }}</span>
+                                        <button type="button" onclick="deleteAttachment({{ $media->id }})" class="text-red-600 hover:text-red-800">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            <div class="mt-4">
+                                <x-input-label for="attachments" :value="__('Add Attachments')" />
+                                <input type="file" name="attachments[]" id="attachments" multiple class="mt-1 block w-full" />
+                                <x-input-error :messages="$errors->get('attachments')" class="mt-2" />
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end">
+                            <x-primary-button>
+                                {{ __('Update Log') }}
+                            </x-primary-button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-</div>
+</x-app-layout>
 
 @push('styles')
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
