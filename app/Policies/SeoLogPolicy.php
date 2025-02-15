@@ -25,12 +25,7 @@ class SeoLogPolicy
      */
     public function view(User $user, SeoLog $seoLog): bool
     {
-        if ($user->role === 'admin') {
-            return true;
-        }
-
-        return $user->role === 'seo_provider' && 
-            $seoLog->project->seoProviders()->where('user_id', $user->id)->exists();
+        return in_array($user->role, ['admin', 'seo_provider']);
     }
 
     /**
@@ -46,12 +41,7 @@ class SeoLogPolicy
      */
     public function update(User $user, SeoLog $seoLog): bool
     {
-        if ($user->role === 'admin') {
-            return true;
-        }
-
-        return $user->role === 'seo_provider' && 
-            $seoLog->project->seoProviders()->where('user_id', $user->id)->exists();
+        return in_array($user->role, ['admin', 'seo_provider']);
     }
 
     /**
@@ -59,12 +49,7 @@ class SeoLogPolicy
      */
     public function delete(User $user, SeoLog $seoLog): bool
     {
-        if ($user->role === 'admin') {
-            return true;
-        }
-
-        return $user->role === 'seo_provider' && 
-            $seoLog->project->seoProviders()->where('user_id', $user->id)->exists();
+        return in_array($user->role, ['admin', 'seo_provider']);
     }
 
     /**

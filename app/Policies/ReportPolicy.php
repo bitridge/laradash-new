@@ -2,12 +2,13 @@
 
 namespace App\Policies;
 
-use App\Models\Project;
+use App\Models\Report;
 use App\Models\User;
+use App\Models\Project;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Auth\Access\Response;
 
-class ProjectPolicy
+class ReportPolicy
 {
     use HandlesAuthorization;
 
@@ -22,7 +23,7 @@ class ProjectPolicy
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, Project $project): bool
+    public function view(User $user, Report $report): bool
     {
         return in_array($user->role, ['admin', 'seo_provider']);
     }
@@ -36,9 +37,17 @@ class ProjectPolicy
     }
 
     /**
+     * Determine whether the user can create a report for a specific project.
+     */
+    public function createForProject(User $user, int $projectId): bool
+    {
+        return in_array($user->role, ['admin', 'seo_provider']);
+    }
+
+    /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user, Project $project): bool
+    public function update(User $user, Report $report): bool
     {
         return in_array($user->role, ['admin', 'seo_provider']);
     }
@@ -46,7 +55,7 @@ class ProjectPolicy
     /**
      * Determine whether the user can delete the model.
      */
-    public function delete(User $user, Project $project): bool
+    public function delete(User $user, Report $report): bool
     {
         return in_array($user->role, ['admin', 'seo_provider']);
     }

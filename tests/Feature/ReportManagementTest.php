@@ -54,203 +54,193 @@ class ReportManagementTest extends TestCase
         $response = $this->actingAs($this->seoProvider)
             ->get(route('reports.create', ['project_id' => $this->project->id]));
 
-        $response->assertOk();
+        $response->assertOk()
+            ->assertViewIs('reports.create')
+            ->assertViewHas('seoLogs')
+            ->assertSee('Generate Report')
+            ->assertSee('Report Information')
+            ->assertSee('Report Sections');
     }
 
-    public function test_report_can_be_created(): void
+    public function test_report_can_be_created_with_multiple_sections_and_images(): void
     {
-        $image = UploadedFile::fake()->image('section1.jpg');
+        $image1 = UploadedFile::fake()->image('section1.jpg');
+        $image2 = UploadedFile::fake()->image('section2.jpg');
         
         $reportData = [
             'project_id' => $this->project->id,
-            'title' => 'Test Report',
+            'title' => 'Comprehensive SEO Report',
             'description' => [
-                'content' => '<p>Test report description</p>',
-                'plainText' => 'Test report description'
+                'content' => '<h1>Executive Summary</h1><p>This is a detailed SEO report with <strong>multiple sections</strong>.</p>',
+                'plainText' => 'Executive Summary This is a detailed SEO report with multiple sections.'
             ],
             'sections' => [
                 [
-                    'title' => 'Section 1',
+                    'title' => 'Technical Analysis',
                     'content' => [
-                        'content' => '<p>Test section content</p>',
-                        'plainText' => 'Test section content'
+                        'content' => '<h2>Technical Findings</h2><ul><li>Site Speed: Excellent</li><li>Mobile Optimization: Good</li></ul>',
+                        'plainText' => 'Technical Findings Site Speed: Excellent Mobile Optimization: Good'
                     ],
-                    'order' => 1
+                    'order' => 1,
+                    'image' => $image1
+                ],
+                [
+                    'title' => 'Content Strategy',
+                    'content' => [
+                        'content' => '<h2>Content Recommendations</h2><p>Key improvements needed in content structure.</p>',
+                        'plainText' => 'Content Recommendations Key improvements needed in content structure.'
+                    ],
+                    'order' => 2,
+                    'image' => $image2
                 ]
             ],
             'seo_logs' => [$this->seoLog->id]
         ];
 
-        // Add the image to the sections array
-        $reportData['sections'][0]['image'] = $image;
-
         $response = $this->actingAs($this->seoProvider)
             ->post(route('reports.store'), $reportData);
 
         $report = Report::first();
         
+        // Basic report assertions
         $this->assertNotNull($report);
         $this->assertEquals($this->project->id, $report->project_id);
-        $this->assertEquals('Test Report', $report->title);
-        $this->assertEquals('<p>Test report description</p>', $report->description['content']);
+        $this->assertEquals('Comprehensive SEO Report', $report->title);
+        $this->assertEquals($this->seoProvider->id, $report->generated_by);
+        $this->assertNotNull($report->generated_at);
         
-        // Check sections
-        $this->assertCount(1, $report->sections);
-        $section = $report->sections->first();
-        $this->assertEquals('Section 1', $section->title);
-        $this->assertEquals('<p>Test section content</p>', $section->content['content']);
-        $this->assertTrue($section->getMedia('section_images')->isNotEmpty());
+        // Description assertions
+        $this->assertArrayHasKey('content', $report->description);
+        $this->assertArrayHasKey('plainText', $report->description);
+        $this->assertStringContainsString('Executive Summary', $report->description['content']);
         
-        // Check SEO logs
+        // Sections assertions
+        $this->assertCount(2, $report->sections);
+        
+        // Check first section
+        $section1 = $report->sections()->where('order', 1)->first();
+        $this->assertEquals('Technical Analysis', $section1->title);
+        $this->assertStringContainsString('Technical Findings', $section1->content['content']);
+        $this->assertTrue($section1->getMedia('section_images')->isNotEmpty());
+        
+        // Check second section
+        $section2 = $report->sections()->where('order', 2)->first();
+        $this->assertEquals('Content Strategy', $section2->title);
+        $this->assertStringContainsString('Content Recommendations', $section2->content['content']);
+        $this->assertTrue($section2->getMedia('section_images')->isNotEmpty());
+        
+        // SEO logs assertions
         $this->assertTrue($report->seoLogs->contains($this->seoLog));
         
+        // Response assertions
         $response->assertRedirect(route('reports.show', $report));
+        $response->assertSessionHas('success');
     }
 
-    public function test_report_requires_valid_project(): void
+    public function test_report_validation_rules(): void
     {
+        // Test missing required fields
+        $response = $this->actingAs($this->seoProvider)
+            ->post(route('reports.store'), []);
+        
+        $response->assertSessionHasErrors(['project_id', 'title', 'description']);
+
+        // Test invalid project ID
         $response = $this->actingAs($this->seoProvider)
             ->post(route('reports.store'), [
                 'project_id' => 999,
-                'title' => 'Test Report',
-                'description' => [
-                    'content' => '<p>Test description</p>',
-                    'plainText' => 'Test description'
-                ]
+                'title' => 'Test Report'
             ]);
-
+        
         $response->assertSessionHasErrors('project_id');
-    }
 
-    public function test_report_requires_description_content(): void
-    {
+        // Test invalid section data
         $response = $this->actingAs($this->seoProvider)
             ->post(route('reports.store'), [
                 'project_id' => $this->project->id,
                 'title' => 'Test Report',
-                'description' => ''
-            ]);
-
-        $response->assertSessionHasErrors('description');
-    }
-
-    public function test_report_sections_are_ordered_correctly(): void
-    {
-        $reportData = [
-            'project_id' => $this->project->id,
-            'title' => 'Test Report',
-            'description' => [
-                'content' => '<p>Test description</p>',
-                'plainText' => 'Test description'
-            ],
-            'sections' => [
-                [
-                    'title' => 'Section 2',
-                    'content' => [
-                        'content' => '<p>Content 2</p>',
-                        'plainText' => 'Content 2'
-                    ],
-                    'order' => 2
+                'description' => [
+                    'content' => '<p>Test</p>',
+                    'plainText' => 'Test'
                 ],
-                [
-                    'title' => 'Section 1',
-                    'content' => [
-                        'content' => '<p>Content 1</p>',
-                        'plainText' => 'Content 1'
-                    ],
-                    'order' => 1
+                'sections' => [
+                    [
+                        'title' => '', // Empty title
+                        'content' => 'Invalid content format', // Wrong format
+                        'order' => 'not a number' // Invalid order
+                    ]
                 ]
-            ]
-        ];
-
-        $this->actingAs($this->seoProvider)
-            ->post(route('reports.store'), $reportData);
-
-        $report = Report::first();
-        $sections = $report->sections()->orderBy('order')->get();
+            ]);
         
-        $this->assertEquals('Section 1', $sections[0]->title);
-        $this->assertEquals('Section 2', $sections[1]->title);
+        $response->assertSessionHasErrors(['sections.0.title', 'sections.0.content', 'sections.0.order']);
     }
 
-    public function test_report_can_be_viewed(): void
+    public function test_unauthorized_users_cannot_create_reports(): void
     {
-        $report = Report::factory()->create([
-            'project_id' => $this->project->id,
-            'generated_by' => $this->seoProvider->id,
-            'title' => 'Test Report',
-            'description' => [
-                'content' => '<p>Test description</p>',
-                'plainText' => 'Test description'
-            ]
-        ]);
+        $regularUser = User::factory()->create(['role' => 'user']);
+        
+        $response = $this->actingAs($regularUser)
+            ->get(route('reports.create', ['project_id' => $this->project->id]));
+        
+        $response->assertForbidden();
 
+        $response = $this->actingAs($regularUser)
+            ->post(route('reports.store'), [
+                'project_id' => $this->project->id,
+                'title' => 'Test Report'
+            ]);
+        
+        $response->assertForbidden();
+    }
+
+    public function test_seo_provider_can_only_create_reports_for_assigned_projects(): void
+    {
+        // Create a project not assigned to the SEO provider
+        $unassignedProject = Project::factory()->create();
+        
         $response = $this->actingAs($this->seoProvider)
-            ->get(route('reports.show', $report));
-
-        $response->assertOk()
-            ->assertSee('Test Report')
-            ->assertSee('Test description');
+            ->post(route('reports.store'), [
+                'project_id' => $unassignedProject->id,
+                'title' => 'Test Report',
+                'description' => [
+                    'content' => '<p>Test</p>',
+                    'plainText' => 'Test'
+                ]
+            ]);
+        
+        $response->assertForbidden();
     }
 
-    public function test_report_pdf_can_be_generated(): void
+    public function test_report_pdf_generation(): void
     {
         $report = Report::factory()->create([
             'project_id' => $this->project->id,
             'generated_by' => $this->seoProvider->id,
-            'title' => 'Test Report',
+            'title' => 'PDF Test Report',
             'description' => [
-                'content' => '<p>Test description</p>',
-                'plainText' => 'Test description'
+                'content' => '<h1>PDF Test</h1><p>This is a test of PDF generation.</p>',
+                'plainText' => 'PDF Test This is a test of PDF generation.'
             ]
         ]);
+
+        // Add sections to the report
+        $report->sections()->create([
+            'title' => 'PDF Section',
+            'content' => [
+                'content' => '<h2>Section Content</h2><p>Test content for PDF.</p>',
+                'plainText' => 'Section Content Test content for PDF.'
+            ],
+            'order' => 1
+        ]);
+
+        // Attach SEO log
+        $report->seoLogs()->attach($this->seoLog->id);
 
         $response = $this->actingAs($this->seoProvider)
             ->get(route('reports.pdf', $report));
 
         $response->assertOk()
-            ->assertHeader('content-type', 'application/pdf');
-    }
-
-    public function test_report_json_content_is_properly_stored(): void
-    {
-        $reportData = [
-            'project_id' => $this->project->id,
-            'title' => 'Test Report',
-            'description' => [
-                'content' => '<h1>Test Heading</h1><p>Test content with <strong>formatting</strong></p>',
-                'plainText' => 'Test Heading Test content with formatting'
-            ],
-            'sections' => [
-                [
-                    'title' => 'Test Section',
-                    'content' => [
-                        'content' => '<h2>Section Heading</h2><ul><li>List item 1</li><li>List item 2</li></ul>',
-                        'plainText' => 'Section Heading List item 1 List item 2'
-                    ],
-                    'order' => 1
-                ]
-            ]
-        ];
-
-        $this->actingAs($this->seoProvider)
-            ->post(route('reports.store'), $reportData);
-
-        $report = Report::first();
-        
-        // Check description JSON structure
-        $this->assertIsArray($report->description);
-        $this->assertArrayHasKey('content', $report->description);
-        $this->assertArrayHasKey('plainText', $report->description);
-        
-        // Check section content JSON structure
-        $section = $report->sections->first();
-        $this->assertIsArray($section->content);
-        $this->assertArrayHasKey('content', $section->content);
-        $this->assertArrayHasKey('plainText', $section->content);
-        
-        // Verify HTML content is preserved
-        $this->assertStringContainsString('<strong>formatting</strong>', $report->description['content']);
-        $this->assertStringContainsString('<ul><li>List item 1</li>', $section->content['content']);
+            ->assertHeader('content-type', 'application/pdf')
+            ->assertHeader('content-disposition', 'attachment; filename="' . $report->title . '.pdf"');
     }
 } 

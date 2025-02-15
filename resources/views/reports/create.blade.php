@@ -41,7 +41,8 @@ use App\Models\Report;
                                     <div id="description-editor" class="mt-1 block w-full min-h-[200px] bg-white">
                                         {!! old('description.content') ?? '' !!}
                                     </div>
-                                    <input type="hidden" name="description" id="description">
+                                    <input type="hidden" name="description[content]" id="description-content">
+                                    <input type="hidden" name="description[plainText]" id="description-plaintext">
                                     <x-input-error class="mt-2" :messages="$errors->get('description')" />
                                 </div>
                             </div>
@@ -207,46 +208,126 @@ use App\Models\Report;
                 };
 
                 // Handle form submission
-                document.querySelector('form').addEventListener('submit', function() {
-                    // Store description content
-                    if (descriptionQuill) {
-                        document.getElementById('description').value = JSON.stringify({
-                            content: descriptionQuill.root.innerHTML,
-                            plainText: descriptionQuill.getText().trim()
-                        });
-                    }
+                document.querySelector('form').addEventListener('submit', function(e) {
+                    e.preventDefault(); // Prevent default form submission
 
-                    // Store section contents
-                    Object.keys(sectionQuills).forEach(sectionId => {
-                        const quill = sectionQuills[sectionId];
-                        const sectionNum = sectionId.split('-')[1];
-                        const contentInput = document.getElementById(`section-content-${sectionNum}`);
-                        if (quill && contentInput) {
-                            contentInput.value = JSON.stringify({
-                                content: quill.root.innerHTML,
-                                plainText: quill.getText().trim()
+                    try {
+                        console.log('Starting form submission...');
+                        
+                        // Store description content
+                        if (descriptionQuill) {
+                            console.log('Processing description...');
+                            const descriptionContent = descriptionQuill.root.innerHTML.trim();
+                            const descriptionPlainText = descriptionQuill.getText().trim();
+                            
+                            console.log('Description content:', {
+                                html: descriptionContent,
+                                plainText: descriptionPlainText
                             });
+                            
+                            if (!descriptionPlainText) {
+                                console.error('Description validation failed: empty content');
+                                alert('Please enter a report description');
+                                return;
+                            }
+
+                            // Set the description fields
+                            document.getElementById('description-content').value = descriptionContent;
+                            document.getElementById('description-plaintext').value = descriptionPlainText;
+                        } else {
+                            console.error('Description Quill editor not initialized');
+                            alert('Error: Description editor not initialized');
+                            return;
                         }
-                    });
+
+                        // Check if at least one section exists
+                        const sections = document.querySelectorAll('[id^="section-"]');
+                        console.log(`Found ${sections.length} sections`);
+                        
+                        if (sections.length === 0) {
+                            console.error('No sections found');
+                            alert('Please add at least one section to the report');
+                            return;
+                        }
+
+                        // Store section contents
+                        let hasError = false;
+                        sections.forEach(section => {
+                            const sectionId = section.id;
+                            const sectionNum = sectionId.split('-')[1];
+                            const quill = sectionQuills[sectionId];
+                            const contentInput = document.getElementById(`section-content-${sectionNum}`);
+                            
+                            console.log(`Processing section ${sectionNum}...`);
+                            
+                            if (quill && contentInput) {
+                                const content = quill.root.innerHTML.trim();
+                                const plainText = quill.getText().trim();
+                                
+                                console.log(`Section ${sectionNum} content:`, {
+                                    html: content,
+                                    plainText: plainText
+                                });
+                                
+                                if (!plainText) {
+                                    console.error(`Section ${sectionNum} validation failed: empty content`);
+                                    alert(`Please enter content for section ${parseInt(sectionNum) + 1}`);
+                                    hasError = true;
+                                    return;
+                                }
+
+                                // Set the section content
+                                contentInput.value = content;
+                            } else {
+                                console.error(`Section ${sectionNum} error: editor not found or input missing`);
+                                hasError = true;
+                            }
+                        });
+
+                        if (hasError) {
+                            console.error('Form validation failed');
+                            return;
+                        }
+
+                        // Log complete form data before submission
+                        const formData = new FormData(this);
+                        const formDataObj = {};
+                        formData.forEach((value, key) => {
+                            formDataObj[key] = value;
+                        });
+                        
+                        console.log('Complete form data:', formDataObj);
+
+                        console.log('Submitting form...');
+                        this.submit();
+                    } catch (error) {
+                        console.error('Form submission error:', error);
+                        console.error('Error stack:', error.stack);
+                        alert('An error occurred while submitting the form. Please check the console for details.');
+                    }
                 });
+
+                // Add initial section automatically
+                addSection();
 
                 // Load old content if it exists
                 @if(old('description'))
                     try {
                         const oldContent = @json(old('description'));
-                        if (typeof oldContent === 'string' && descriptionQuill) {
-                            const parsedContent = JSON.parse(oldContent);
-                            if (parsedContent.content) {
-                                descriptionQuill.root.innerHTML = parsedContent.content;
+                        if (oldContent && descriptionQuill) {
+                            if (typeof oldContent === 'string') {
+                                const parsedContent = JSON.parse(oldContent);
+                                if (parsedContent.content) {
+                                    descriptionQuill.root.innerHTML = parsedContent.content;
+                                }
+                            } else if (oldContent.content) {
+                                descriptionQuill.root.innerHTML = oldContent.content;
                             }
                         }
                     } catch (e) {
                         console.error('Error loading old content:', e);
                     }
                 @endif
-
-                // Add first section by default
-                addSection();
             });
         </script>
     @endpush
