@@ -21,23 +21,23 @@
                         </div>
                     @endif
 
-                    <div x-data="{ activeTab: 'app' }">
+                    <div class="settings-container">
                         <!-- Tabs -->
                         <div class="mb-4 border-b border-gray-200">
                             <nav class="-mb-px flex space-x-8" aria-label="Tabs">
-                                <button @click="activeTab = 'app'" :class="{'border-indigo-500 text-indigo-600': activeTab === 'app'}" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                                <button onclick="switchTab('app')" class="tab-button active border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="app">
                                     Application Settings
                                 </button>
-                                <button @click="activeTab = 'smtp'" :class="{'border-indigo-500 text-indigo-600': activeTab === 'smtp'}" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                                <button onclick="switchTab('smtp')" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="smtp">
                                     SMTP Settings
                                 </button>
-                                <button @click="activeTab = 'company'" :class="{'border-indigo-500 text-indigo-600': activeTab === 'company'}" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                                <button onclick="switchTab('company')" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="company">
                                     Company Information
                                 </button>
-                                <button @click="activeTab = 'captcha'" :class="{'border-indigo-500 text-indigo-600': activeTab === 'captcha'}" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                                <button onclick="switchTab('captcha')" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="captcha">
                                     Captcha Settings
                                 </button>
-                                <button @click="activeTab = 'backup'" :class="{'border-indigo-500 text-indigo-600': activeTab === 'backup'}" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                                <button onclick="switchTab('backup')" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="backup">
                                     Backup Settings
                                 </button>
                             </nav>
@@ -48,7 +48,7 @@
                             @method('PUT')
 
                             <!-- Application Settings -->
-                            <div x-show="activeTab === 'app'">
+                            <div class="tab-content" id="app-tab">
                                 <div class="space-y-4">
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700">Application Name</label>
@@ -88,92 +88,96 @@
                             </div>
 
                             <!-- SMTP Settings -->
-                            <div x-show="activeTab === 'smtp'" class="space-y-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">Sender Name</label>
-                                    <input type="text" name="smtp[sender_name]" value="{{ old('smtp.sender_name', $settings['smtp']['sender_name']) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                </div>
+                            <div class="tab-content hidden" id="smtp-tab">
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Sender Name</label>
+                                        <input type="text" name="smtp[sender_name]" value="{{ old('smtp.sender_name', $settings['smtp']['sender_name']) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                    </div>
 
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">Email Encryption</label>
-                                    <select name="smtp[encryption]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                        <option value="tls" {{ old('smtp.encryption', $settings['smtp']['encryption']) === 'tls' ? 'selected' : '' }}>TLS</option>
-                                        <option value="ssl" {{ old('smtp.encryption', $settings['smtp']['encryption']) === 'ssl' ? 'selected' : '' }}>SSL</option>
-                                    </select>
-                                </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Email Encryption</label>
+                                        <select name="smtp[encryption]" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                            <option value="tls" {{ old('smtp.encryption', $settings['smtp']['encryption']) === 'tls' ? 'selected' : '' }}>TLS</option>
+                                            <option value="ssl" {{ old('smtp.encryption', $settings['smtp']['encryption']) === 'ssl' ? 'selected' : '' }}>SSL</option>
+                                        </select>
+                                    </div>
 
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">SMTP Host</label>
-                                    <input type="text" name="smtp[host]" value="{{ old('smtp.host', $settings['smtp']['host']) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">SMTP Host</label>
+                                        <input type="text" name="smtp[host]" value="{{ old('smtp.host', $settings['smtp']['host']) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                    </div>
 
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">SMTP Port</label>
-                                    <input type="number" name="smtp[port]" value="{{ old('smtp.port', $settings['smtp']['port']) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">SMTP Port</label>
+                                        <input type="number" name="smtp[port]" value="{{ old('smtp.port', $settings['smtp']['port']) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                    </div>
 
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">SMTP Username</label>
-                                    <input type="text" name="smtp[username]" value="{{ old('smtp.username', $settings['smtp']['username']) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">SMTP Username</label>
+                                        <input type="text" name="smtp[username]" value="{{ old('smtp.username', $settings['smtp']['username']) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                    </div>
 
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">SMTP Password</label>
-                                    <input type="password" name="smtp[password]" value="{{ old('smtp.password', $settings['smtp']['password']) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">SMTP Password</label>
+                                        <input type="password" name="smtp[password]" value="{{ old('smtp.password', $settings['smtp']['password']) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                    </div>
 
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">Sender Email</label>
-                                    <input type="email" name="smtp[sender_email]" value="{{ old('smtp.sender_email', $settings['smtp']['sender_email']) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Sender Email</label>
+                                        <input type="email" name="smtp[sender_email]" value="{{ old('smtp.sender_email', $settings['smtp']['sender_email']) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                    </div>
 
-                                <div class="mt-4 p-4 bg-gray-50 rounded-md">
-                                    <h3 class="text-sm font-medium text-gray-900">Send Test Email</h3>
-                                    <p class="mt-1 text-sm text-gray-500">Send a test email to verify your SMTP settings.</p>
-                                    <div class="mt-3 flex items-center gap-4">
-                                        <input type="email" name="test_email" placeholder="Enter email address" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                        <button type="button" onclick="sendTestEmail(this.form.test_email.value)" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                            Test
-                                        </button>
+                                    <div class="mt-4 p-4 bg-gray-50 rounded-md">
+                                        <h3 class="text-sm font-medium text-gray-900">Send Test Email</h3>
+                                        <p class="mt-1 text-sm text-gray-500">Send a test email to verify your SMTP settings.</p>
+                                        <div class="mt-3 flex items-center gap-4">
+                                            <input type="email" name="test_email" placeholder="Enter email address" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                            <button type="button" onclick="sendTestEmail(this.form.test_email.value)" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                Test
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Company Information -->
-                            <div x-show="activeTab === 'company'" class="space-y-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">Company Name</label>
-                                    <input type="text" name="company[name]" value="{{ old('company.name', $settings['company']['name']) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                </div>
+                            <div class="tab-content hidden" id="company-tab">
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Company Name</label>
+                                        <input type="text" name="company[name]" value="{{ old('company.name', $settings['company']['name']) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                    </div>
 
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">Address</label>
-                                    <textarea name="company[address]" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">{{ old('company.address', $settings['company']['address']) }}</textarea>
-                                </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Address</label>
+                                        <textarea name="company[address]" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">{{ old('company.address', $settings['company']['address']) }}</textarea>
+                                    </div>
 
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">Email</label>
-                                    <input type="email" name="company[email]" value="{{ old('company.email', $settings['company']['email']) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Email</label>
+                                        <input type="email" name="company[email]" value="{{ old('company.email', $settings['company']['email']) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                    </div>
 
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">Phone</label>
-                                    <input type="text" name="company[phone]" value="{{ old('company.phone', $settings['company']['phone']) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Phone</label>
+                                        <input type="text" name="company[phone]" value="{{ old('company.phone', $settings['company']['phone']) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                    </div>
 
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">Website URL</label>
-                                    <input type="url" name="company[url]" value="{{ old('company.url', $settings['company']['url']) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Website URL</label>
+                                        <input type="url" name="company[url]" value="{{ old('company.url', $settings['company']['url']) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                    </div>
 
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">Contact Email</label>
-                                    <input type="email" name="company[contact_email]" value="{{ old('company.contact_email', $settings['company']['contact_email']) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Contact Email</label>
+                                        <input type="email" name="company[contact_email]" value="{{ old('company.contact_email', $settings['company']['contact_email']) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                    </div>
                                 </div>
                             </div>
 
                             <!-- Captcha Settings -->
-                            <div x-show="activeTab === 'captcha'" class="space-y-4">
+                            <div class="tab-content hidden" id="captcha-tab">
                                 <div class="flex items-center">
                                     <input type="checkbox" name="captcha[enabled]" value="1" {{ old('captcha.enabled', $settings['captcha']['enabled']) ? 'checked' : '' }} class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
                                     <label class="ml-2 block text-sm text-gray-900">Enable Math Captcha on Login Page</label>
@@ -182,7 +186,7 @@
                             </div>
 
                             <!-- Backup Settings -->
-                            <div x-show="activeTab === 'backup'" class="space-y-4">
+                            <div class="tab-content hidden" id="backup-tab">
                                 <div class="bg-white p-6 rounded-lg shadow-sm">
                                     <h3 class="text-lg font-medium text-gray-900 mb-4">Database Backup</h3>
                                     
@@ -249,7 +253,6 @@
                                                 <div>
                                                     <label class="block text-sm font-medium text-gray-700">Storage Type</label>
                                                     <select name="backup[storage_type]" 
-                                                            x-model="storageType"
                                                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                                                         <option value="">None</option>
                                                         <option value="ftp">FTP Server</option>
@@ -258,7 +261,7 @@
                                                 </div>
 
                                                 <!-- FTP Settings -->
-                                                <div x-show="storageType === 'ftp'" class="space-y-4">
+                                                <div class="ftp-settings hidden space-y-4">
                                                     <div>
                                                         <label class="block text-sm font-medium text-gray-700">FTP Host</label>
                                                         <input type="text" name="backup[ftp_host]" 
@@ -292,7 +295,7 @@
                                                 </div>
 
                                                 <!-- Google Drive Settings -->
-                                                <div x-show="storageType === 'google_drive'" class="space-y-4">
+                                                <div class="google-drive-settings hidden space-y-4">
                                                     @if(!empty($settings['backup']['google_drive_connected']))
                                                         <div class="bg-green-50 p-4 rounded-md">
                                                             <div class="flex">
@@ -369,6 +372,221 @@
 
     @push('scripts')
     <script>
+        // Tab switching functionality
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // Remove active class from all tab buttons
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('border-indigo-500', 'text-indigo-600');
+                button.classList.add('border-transparent', 'text-gray-500');
+            });
+            
+            // Show selected tab content
+            const selectedTab = document.getElementById(tabName + '-tab');
+            if (selectedTab) {
+                selectedTab.classList.remove('hidden');
+            }
+            
+            // Add active class to selected tab button
+            const selectedButton = document.querySelector(`[data-tab="${tabName}"]`);
+            if (selectedButton) {
+                selectedButton.classList.remove('border-transparent', 'text-gray-500');
+                selectedButton.classList.add('border-indigo-500', 'text-indigo-600');
+            }
+
+            // Load backups if backup tab is selected
+            if (tabName === 'backup') {
+                loadBackups();
+            }
+        }
+
+        // Initialize the first tab
+        document.addEventListener('DOMContentLoaded', function() {
+            switchTab('app');
+        });
+
+        // Storage type toggle functionality
+        const storageTypeSelect = document.querySelector('select[name="backup[storage_type]"]');
+        const ftpSettings = document.querySelector('.ftp-settings');
+        const googleDriveSettings = document.querySelector('.google-drive-settings');
+
+        if (storageTypeSelect) {
+            storageTypeSelect.addEventListener('change', function() {
+                const selectedValue = this.value;
+                
+                // Hide all storage settings
+                if (ftpSettings) ftpSettings.classList.add('hidden');
+                if (googleDriveSettings) googleDriveSettings.classList.add('hidden');
+                
+                // Show selected storage settings
+                if (selectedValue === 'ftp' && ftpSettings) {
+                    ftpSettings.classList.remove('hidden');
+                } else if (selectedValue === 'google_drive' && googleDriveSettings) {
+                    googleDriveSettings.classList.remove('hidden');
+                }
+            });
+
+            // Trigger change event on load to set initial state
+            storageTypeSelect.dispatchEvent(new Event('change'));
+        }
+
+        // Backup functionality
+        function backupDatabase() {
+            if (!confirm('Are you sure you want to create a backup now?')) {
+                return;
+            }
+
+            const button = document.querySelector('button[onclick="backupDatabase()"]');
+            button.disabled = true;
+            button.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Creating Backup...
+            `;
+
+            fetch('{{ route('settings.backup.now') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Backup created successfully!');
+                    loadBackups();
+                } else {
+                    throw new Error(data.message || 'Failed to create backup');
+                }
+            })
+            .catch(error => {
+                console.error('Backup error:', error);
+                alert('Error creating backup: ' + error.message);
+            })
+            .finally(() => {
+                button.disabled = false;
+                button.innerHTML = `
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    Backup Now
+                `;
+            });
+        }
+
+        function loadBackups() {
+            const container = document.getElementById('backups-list');
+            
+            // Show loading state
+            container.innerHTML = `
+                <div class="animate-pulse flex space-x-4">
+                    <div class="flex-1 space-y-4 py-1">
+                        <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+                        <div class="h-4 bg-gray-200 rounded"></div>
+                        <div class="h-4 bg-gray-200 rounded"></div>
+                    </div>
+                </div>
+            `;
+
+            fetch('{{ route('settings.backup.list') }}', {
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.backups.length === 0) {
+                        container.innerHTML = '<p class="text-gray-500 text-sm">No backups available.</p>';
+                        return;
+                    }
+
+                    const table = document.createElement('table');
+                    table.className = 'min-w-full divide-y divide-gray-200';
+                    
+                    table.innerHTML = `
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Filename</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created At</th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                    `;
+
+                    data.backups.forEach(backup => {
+                        const size = formatFileSize(backup.size);
+                        const date = new Date(backup.created_at).toLocaleString();
+                        
+                        table.querySelector('tbody').innerHTML += `
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${backup.filename}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${size}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${date}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <a href="{{ url('settings/backup/download') }}/${backup.filename}" 
+                                       class="text-indigo-600 hover:text-indigo-900 mr-4">Download</a>
+                                    <button onclick="deleteBackup('${backup.filename}')"
+                                            class="text-red-600 hover:text-red-900">Delete</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+
+                    container.innerHTML = '';
+                    container.appendChild(table);
+                } else {
+                    container.innerHTML = '<p class="text-red-500 text-sm">Failed to load backups: ' + data.message + '</p>';
+                }
+            })
+            .catch(error => {
+                container.innerHTML = '<p class="text-red-500 text-sm">Error loading backups: ' + error + '</p>';
+            });
+        }
+
+        function deleteBackup(filename) {
+            if (!confirm('Are you sure you want to delete this backup?')) {
+                return;
+            }
+
+            fetch(`/settings/backup/${filename}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadBackups();
+                } else {
+                    alert('Failed to delete backup: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting backup:', error);
+                alert('Failed to delete backup: ' + error);
+            });
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
         function sendTestEmail(email) {
             if (!email) {
                 alert('Please enter an email address');
@@ -414,59 +632,6 @@
                 
                 reader.readAsDataURL(file);
             }
-        }
-
-        // Add backup related functions
-        function backupDatabase() {
-            if (!confirm('Are you sure you want to create a backup now?')) {
-                return;
-            }
-
-            const button = document.querySelector('button[onclick="backupDatabase()"]');
-            button.disabled = true;
-            button.innerHTML = `
-                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Creating Backup...
-            `;
-
-            fetch('{{ route('settings.backup.now') }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                }
-            })
-            .then(async response => {
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    throw new Error('Server returned non-JSON response');
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    alert('Backup created successfully!');
-                    loadBackups(); // Reload the backups list
-                } else {
-                    throw new Error(data.message || 'Failed to create backup');
-                }
-            })
-            .catch(error => {
-                console.error('Backup error:', error);
-                alert('Error creating backup: ' + error.message);
-            })
-            .finally(() => {
-                button.disabled = false;
-                button.innerHTML = `
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                    </svg>
-                    Backup Now
-                `;
-            });
         }
 
         function testFtpConnection() {
@@ -521,157 +686,6 @@
             .catch(error => {
                 alert('Error disconnecting Google Drive: ' + error);
             });
-        }
-
-        // Add backup list functionality
-        function loadBackups() {
-            fetch('{{ route('settings.backup.list') }}', {
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const container = document.getElementById('backups-list');
-                    if (data.backups.length === 0) {
-                        container.innerHTML = '<p class="text-gray-500 text-sm">No backups available.</p>';
-                        return;
-                    }
-
-                    const table = document.createElement('table');
-                    table.className = 'min-w-full divide-y divide-gray-200';
-                    
-                    // Add table header
-                    table.innerHTML = `
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Filename</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created At</th>
-                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                    `;
-
-                    // Add table rows
-                    data.backups.forEach(backup => {
-                        const size = formatFileSize(backup.size);
-                        const date = new Date(backup.created_at).toLocaleString();
-                        
-                        table.querySelector('tbody').innerHTML += `
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${backup.filename}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${size}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${date}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <a href="{{ url('settings/backup/download') }}/${backup.filename}" 
-                                       class="text-indigo-600 hover:text-indigo-900">
-                                        Download
-                                    </a>
-                                </td>
-                            </tr>
-                        `;
-                    });
-
-                    container.innerHTML = '';
-                    container.appendChild(table);
-                } else {
-                    document.getElementById('backups-list').innerHTML = 
-                        '<p class="text-red-500 text-sm">Failed to load backups: ' + data.message + '</p>';
-                }
-            })
-            .catch(error => {
-                document.getElementById('backups-list').innerHTML = 
-                    '<p class="text-red-500 text-sm">Error loading backups: ' + error + '</p>';
-            });
-        }
-
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-
-        // Load backups when the backup tab is shown
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('settingsForm', () => ({
-                storageType: '{{ old('backup.storage_type', $settings['backup']['storage_type'] ?? '') }}',
-                init() {
-                    this.$watch('activeTab', value => {
-                        if (value === 'backup') {
-                            loadBackups();
-                        }
-                    });
-                }
-            }))
-        });
-
-        // Reload backup list after creating a new backup
-        const originalBackupDatabase = window.backupDatabase;
-        window.backupDatabase = async function() {
-            await originalBackupDatabase();
-            loadBackups();
-        };
-
-        function backupSettings() {
-            return {
-                backups: [],
-                loading: false,
-                message: null,
-                messageType: null,
-
-                async deleteBackup(filename) {
-                    if (!confirm('Are you sure you want to delete this backup?')) {
-                        return;
-                    }
-
-                    try {
-                        const response = await fetch(`/settings/backup/${filename}`, {
-                            method: 'DELETE',
-                            headers: {
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                            }
-                        });
-
-                        const result = await response.json();
-
-                        if (result.success) {
-                            this.message = 'Backup deleted successfully';
-                            this.messageType = 'success';
-                            // Refresh the backup list
-                            this.loadBackups();
-                        } else {
-                            this.message = result.message || 'Failed to delete backup';
-                            this.messageType = 'error';
-                        }
-                    } catch (error) {
-                        console.error('Error deleting backup:', error);
-                        this.message = 'Failed to delete backup';
-                        this.messageType = 'error';
-                    }
-
-                    setTimeout(() => {
-                        this.message = null;
-                        this.messageType = null;
-                    }, 3000);
-                },
-
-                formatBytes(bytes) {
-                    if (bytes === 0) return '0 Bytes';
-                    const k = 1024;
-                    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-                    const i = Math.floor(Math.log(bytes) / Math.log(k));
-                    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-                },
-
-                formatDate(dateString) {
-                    return new Date(dateString).toLocaleString();
-                }
-            }
         }
     </script>
     @endpush

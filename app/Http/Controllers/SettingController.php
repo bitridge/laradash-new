@@ -91,29 +91,102 @@ class SettingController extends Controller
     public function testEmail(Request $request)
     {
         $request->validate([
-            'test_email' => 'required|email',
+            'test_email' => 'required|email'
         ]);
 
         try {
-            $smtp = Setting::get('smtp');
+            // Get SMTP settings
+            $smtpSettings = Setting::get('smtp');
+
+            // Configure mail settings
             config([
-                'mail.mailers.smtp.host' => $smtp['host'],
-                'mail.mailers.smtp.port' => $smtp['port'],
-                'mail.mailers.smtp.encryption' => $smtp['encryption'],
-                'mail.mailers.smtp.username' => $smtp['username'],
-                'mail.mailers.smtp.password' => $smtp['password'],
-                'mail.from.address' => $smtp['sender_email'],
-                'mail.from.name' => $smtp['sender_name'],
+                'mail.mailers.smtp.host' => $smtpSettings['host'],
+                'mail.mailers.smtp.port' => $smtpSettings['port'],
+                'mail.mailers.smtp.encryption' => $smtpSettings['encryption'],
+                'mail.mailers.smtp.username' => $smtpSettings['username'],
+                'mail.mailers.smtp.password' => $smtpSettings['password'],
+                'mail.from.address' => $smtpSettings['sender_email'],
+                'mail.from.name' => $smtpSettings['sender_name'],
             ]);
 
+            // Send test email
             Mail::raw('This is a test email from your application.', function($message) use ($request) {
                 $message->to($request->test_email)
                         ->subject('Test Email');
             });
 
-            return back()->with('success', 'Test email sent successfully.');
+            return response()->json(['success' => true]);
         } catch (\Exception $e) {
-            return back()->with('error', 'Failed to send test email: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+
+    public function connectGoogleDrive()
+    {
+        // Initialize Google Client
+        $client = new \Google_Client();
+        $client->setClientId(config('services.google.client_id'));
+        $client->setClientSecret(config('services.google.client_secret'));
+        $client->setRedirectUri(route('settings.google-drive.callback'));
+        $client->addScope(\Google_Service_Drive::DRIVE_FILE);
+
+        // Generate the URL to request access
+        $authUrl = $client->createAuthUrl();
+
+        return redirect($authUrl);
+    }
+
+    public function handleGoogleDriveCallback(Request $request)
+    {
+        if ($request->has('error')) {
+            return redirect()->route('settings.index')
+                           ->with('error', 'Failed to connect Google Drive: ' . $request->get('error'));
+        }
+
+        try {
+            // Initialize Google Client
+            $client = new \Google_Client();
+            $client->setClientId(config('services.google.client_id'));
+            $client->setClientSecret(config('services.google.client_secret'));
+            $client->setRedirectUri(route('settings.google-drive.callback'));
+
+            // Exchange authorization code for access token
+            $token = $client->fetchAccessTokenWithAuthCode($request->get('code'));
+
+            if (isset($token['error'])) {
+                throw new \Exception($token['error_description'] ?? $token['error']);
+            }
+
+            // Store the token in settings
+            $backupSettings = Setting::get('backup', []);
+            $backupSettings['google_drive_token'] = $token;
+            Setting::set('backup', $backupSettings);
+
+            return redirect()->route('settings.index')
+                           ->with('success', 'Google Drive connected successfully.');
+        } catch (\Exception $e) {
+            return redirect()->route('settings.index')
+                           ->with('error', 'Failed to connect Google Drive: ' . $e->getMessage());
+        }
+    }
+
+    public function disconnectGoogleDrive()
+    {
+        try {
+            // Remove Google Drive token from settings
+            $backupSettings = Setting::get('backup', []);
+            unset($backupSettings['google_drive_token']);
+            Setting::set('backup', $backupSettings);
+
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
         }
     }
 } 

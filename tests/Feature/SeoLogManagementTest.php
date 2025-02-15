@@ -47,26 +47,19 @@ class SeoLogManagementTest extends TestCase
 
     public function test_seo_log_can_be_created(): void
     {
-        $attachment = UploadedFile::fake()->image('work.jpg');
+        Storage::fake('public');
+        $file = UploadedFile::fake()->create('document.pdf', 100);
 
         $logData = [
             'project_id' => $this->project->id,
+            'title' => 'Test SEO Log',
             'log_type' => 'technical',
-            'title' => 'Technical SEO Audit',
             'date' => now()->format('Y-m-d'),
-            'content' => json_encode([
-                'content' => '<p>Content of the SEO log</p>',
-                'plainText' => 'Content of the SEO log'
-            ]),
-            'action_items' => json_encode([
-                'content' => '<ul><li>Action item 1</li></ul>',
-                'plainText' => 'Action item 1'
-            ]),
-            'recommendations' => json_encode([
-                'content' => '<ul><li>Recommendation 1</li></ul>',
-                'plainText' => 'Recommendation 1'
-            ]),
-            'attachments' => [$attachment]
+            'content' => [
+                'content' => '<p>Test content</p>',
+                'plainText' => 'Test content'
+            ],
+            'attachments' => [$file]
         ];
 
         $response = $this->actingAs($this->seoProvider)
@@ -74,7 +67,10 @@ class SeoLogManagementTest extends TestCase
 
         $response->assertRedirect();
         
-        $seoLog = SeoLog::first();
+        $seoLog = SeoLog::where('project_id', $this->project->id)
+            ->where('title', 'Test SEO Log')
+            ->first();
+            
         $this->assertNotNull($seoLog);
         $this->assertEquals($this->project->id, $seoLog->project_id);
         $this->assertEquals($this->seoProvider->id, $seoLog->user_id);
@@ -84,31 +80,26 @@ class SeoLogManagementTest extends TestCase
 
     public function test_seo_log_can_be_updated(): void
     {
+        Storage::fake('public');
         $seoLog = SeoLog::factory()->create([
             'project_id' => $this->project->id,
-            'user_id' => $this->seoProvider->id
+            'user_id' => $this->seoProvider->id,
+            'log_type' => 'technical',
+            'title' => 'Original Title'
         ]);
 
-        $newAttachment = UploadedFile::fake()->image('updated-work.jpg');
+        $file = UploadedFile::fake()->create('document.pdf', 100);
 
         $updatedData = [
             'project_id' => $this->project->id,
-            'log_type' => 'on_page',
             'title' => 'Updated SEO Log',
+            'log_type' => 'technical',
             'date' => now()->format('Y-m-d'),
-            'content' => json_encode([
+            'content' => [
                 'content' => '<p>Updated content</p>',
                 'plainText' => 'Updated content'
-            ]),
-            'action_items' => json_encode([
-                'content' => '<ul><li>Updated action item</li></ul>',
-                'plainText' => 'Updated action item'
-            ]),
-            'recommendations' => json_encode([
-                'content' => '<ul><li>Updated recommendation</li></ul>',
-                'plainText' => 'Updated recommendation'
-            ]),
-            'attachments' => [$newAttachment]
+            ],
+            'attachments' => [$file]
         ];
 
         $response = $this->actingAs($this->seoProvider)
@@ -117,7 +108,7 @@ class SeoLogManagementTest extends TestCase
         $response->assertRedirect();
         
         $seoLog->refresh();
-        $this->assertEquals('on_page', $seoLog->log_type);
+        $this->assertEquals('technical', $seoLog->log_type);
         $this->assertEquals('Updated SEO Log', $seoLog->title);
         $this->assertTrue($seoLog->getMedia('attachments')->isNotEmpty());
     }

@@ -19,15 +19,7 @@ class SeoLogFactory extends Factory
             'content' => [
                 'content' => '<p>' . fake()->paragraph() . '</p>',
                 'plainText' => fake()->paragraph()
-            ],
-            'action_items' => [
-                'content' => '<ul><li>' . fake()->sentence() . '</li></ul>',
-                'plainText' => fake()->sentence()
-            ],
-            'recommendations' => [
-                'content' => '<ul><li>' . fake()->sentence() . '</li></ul>',
-                'plainText' => fake()->sentence()
-            ],
+            ]
         ];
     }
 

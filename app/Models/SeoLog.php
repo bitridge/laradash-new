@@ -17,27 +17,15 @@ class SeoLog extends Model implements HasMedia
     protected $fillable = [
         'project_id',
         'user_id',
-        'log_type',
         'title',
-        'content',
-        'action_items',
-        'recommendations',
+        'log_type',
         'date',
-        'work_description',
-        'keywords_targeted',
-        'backlinks_created',
-        'rankings_improvement',
-        'additional_notes',
+        'content'
     ];
 
     protected $casts = [
         'date' => 'date',
-        'content' => 'array',
-        'action_items' => 'array',
-        'recommendations' => 'array',
-        'keywords_targeted' => 'array',
-        'backlinks_created' => 'array',
-        'rankings_improvement' => 'array',
+        'content' => 'array'
     ];
 
     const TYPES = [
@@ -68,21 +56,7 @@ class SeoLog extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('attachments')
-            ->useDisk('public')
-            ->registerMediaConversions(function (Media $media) {
-                $this->addMediaConversion('thumbnail')
-                    ->width(200)
-                    ->height(200)
-                    ->sharpen(10)
-                    ->nonQueued();
-
-                $this->addMediaConversion('preview')
-                    ->width(800)
-                    ->height(800)
-                    ->sharpen(10)
-                    ->nonQueued();
-            });
+        $this->addMediaCollection('attachments');
     }
 
     protected static function boot()

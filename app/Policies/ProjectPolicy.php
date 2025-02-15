@@ -28,8 +28,11 @@ class ProjectPolicy
             return true;
         }
 
-        return $user->role === 'seo_provider' && 
-            $project->seoProviders()->where('user_id', $user->id)->exists();
+        if ($user->role !== 'seo_provider') {
+            return false;
+        }
+
+        return $project->seoProviders()->where('user_id', $user->id)->exists();
     }
 
     /**
@@ -49,8 +52,11 @@ class ProjectPolicy
             return true;
         }
 
-        return $user->role === 'seo_provider' && 
-            $project->seoProviders()->where('user_id', $user->id)->exists();
+        if ($user->role !== 'seo_provider') {
+            return false;
+        }
+
+        return $project->seoProviders()->where('user_id', $user->id)->exists();
     }
 
     /**
@@ -62,7 +68,10 @@ class ProjectPolicy
             return true;
         }
 
-        return $user->role === 'seo_provider' && 
-            $project->seoProviders()->where('user_id', $user->id)->exists();
+        if ($user->role !== 'seo_provider') {
+            return false;
+        }
+
+        return $project->seoProviders()->where('user_id', $user->id)->exists();
     }
 } 
