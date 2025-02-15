@@ -127,11 +127,26 @@ use App\Models\SeoLog;
             });
 
             // Store Quill's content in the hidden input before form submission
-            document.querySelector('form').addEventListener('submit', function() {
+            document.getElementById('seoLogForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const content = quill.root.innerHTML;
+                const plainText = quill.getText().trim();
+                
+                // Check if the content is empty
+                if (!plainText) {
+                    alert('Please enter some content for the log.');
+                    return false;
+                }
+                
+                // Set the content value
                 document.getElementById('content').value = JSON.stringify({
-                    content: quill.root.innerHTML,
-                    plainText: quill.getText().trim()
+                    content: content,
+                    plainText: plainText
                 });
+                
+                // Submit the form
+                this.submit();
             });
 
             // If there's old content from validation error, load it

@@ -68,7 +68,22 @@ class SeoLogController extends BaseController
             'log_type' => 'required|in:' . implode(',', array_keys(SeoLog::TYPES)),
             'title' => 'required|string|max:255',
             'date' => 'required|date',
-            'content' => 'required',
+            'content' => [
+                'required',
+                function ($attribute, $value, $fail) {
+                    try {
+                        $content = json_decode($value, true);
+                        if (!is_array($content) || !isset($content['content']) || !isset($content['plainText'])) {
+                            $fail('The content format is invalid.');
+                        }
+                        if (empty($content['plainText'])) {
+                            $fail('The content cannot be empty.');
+                        }
+                    } catch (\Exception $e) {
+                        $fail('The content format is invalid.');
+                    }
+                },
+            ],
         ]);
 
         // Check if user has access to the project
@@ -79,10 +94,8 @@ class SeoLogController extends BaseController
             }
         }
 
-        // Handle content as array or JSON
-        $content = is_string($validated['content']) 
-            ? json_decode($validated['content'], true) 
-            : $validated['content'];
+        // Handle content as JSON
+        $content = json_decode($validated['content'], true);
 
         $seoLog = SeoLog::create([
             'project_id' => $validated['project_id'],

@@ -7,7 +7,7 @@
     }
 @endphp
 
-<div class="space-y-6">
+<div class="space-y-6" id="projectForm">
     <div>
         <x-input-label for="logo" value="Project Logo" />
         <div class="mt-1 flex items-center space-x-4">
@@ -64,13 +64,10 @@
 
     <div>
         <x-input-label for="details" value="Project Details" />
-        <textarea
-            id="details"
-            name="details"
-            rows="6"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            required
-        >{{ old('details', $project?->details ?? '') }}</textarea>
+        <div id="quill-editor" class="mt-1 block w-full min-h-[200px] bg-white">
+            {!! is_array($projectDetails) ? ($projectDetails['content'] ?? '') : $projectDetails !!}
+        </div>
+        <input type="hidden" name="details" id="details">
         <x-input-error class="mt-2" :messages="$errors->get('details')" />
     </div>
 
@@ -95,6 +92,8 @@
     </div>
 </div>
 
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 <script>
     // Logo preview functionality
     function showPreview(event) {
@@ -112,4 +111,86 @@
             reader.readAsDataURL(file);
         }
     }
-</script> 
+
+    // Initialize Quill editor
+    document.addEventListener('DOMContentLoaded', function() {
+        var quill = new Quill('#quill-editor', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'color': [] }, { 'background': [] }],
+                    ['link', 'code-block'],
+                    ['clean']
+                ]
+            },
+            placeholder: 'Write project details here...'
+        });
+
+        // Handle form submission
+        const form = document.getElementById('projectForm').closest('form');
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const content = quill.root.innerHTML;
+            const plainText = quill.getText().trim();
+            
+            // Check if the content is empty
+            if (!plainText) {
+                alert('Please enter project details.');
+                return false;
+            }
+            
+            // Set the content value
+            document.getElementById('details').value = JSON.stringify({
+                content: content,
+                plainText: plainText
+            });
+            
+            // Submit the form
+            this.submit();
+        });
+
+        // Load existing content if available
+        @if(old('details'))
+            try {
+                const oldContent = @json(old('details'));
+                if (typeof oldContent === 'object' && oldContent.content) {
+                    quill.root.innerHTML = oldContent.content;
+                } else if (typeof oldContent === 'string') {
+                    try {
+                        const parsedContent = JSON.parse(oldContent);
+                        if (parsedContent.content) {
+                            quill.root.innerHTML = parsedContent.content;
+                        }
+                    } catch (e) {
+                        quill.root.innerHTML = oldContent;
+                    }
+                }
+            } catch (e) {
+                console.error('Error loading old content:', e);
+            }
+        @endif
+    });
+</script>
+
+<style>
+    .ql-editor {
+        min-height: 200px;
+        background-color: white;
+    }
+    .ql-container {
+        border: 1px solid #d1d5db;
+        border-top: none;
+        border-bottom-left-radius: 0.375rem;
+        border-bottom-right-radius: 0.375rem;
+    }
+    .ql-toolbar {
+        border: 1px solid #d1d5db;
+        border-top-left-radius: 0.375rem;
+        border-top-right-radius: 0.375rem;
+        background-color: white;
+    }
+</style> 

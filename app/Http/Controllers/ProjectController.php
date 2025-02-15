@@ -49,11 +49,36 @@ class ProjectController extends BaseController
             'website_url' => 'required|url|max:255',
             'status' => 'required|in:active,paused,completed',
             'start_date' => 'required|date',
-            'details' => 'required|string',
+            'details' => [
+                'required',
+                function ($attribute, $value, $fail) {
+                    try {
+                        $content = json_decode($value, true);
+                        if (!is_array($content) || !isset($content['content']) || !isset($content['plainText'])) {
+                            $fail('The details format is invalid.');
+                        }
+                        if (empty($content['plainText'])) {
+                            $fail('The details cannot be empty.');
+                        }
+                    } catch (\Exception $e) {
+                        $fail('The details format is invalid.');
+                    }
+                },
+            ],
             'logo' => 'nullable|image|max:10240',
         ]);
 
-        $project = Project::create($validated);
+        // Handle details as JSON
+        $details = json_decode($validated['details'], true);
+
+        $project = Project::create([
+            'customer_id' => $validated['customer_id'],
+            'name' => $validated['name'],
+            'website_url' => $validated['website_url'],
+            'status' => $validated['status'],
+            'start_date' => $validated['start_date'],
+            'details' => $details,
+        ]);
 
         if ($request->hasFile('logo')) {
             $project->addMediaFromRequest('logo')
@@ -101,14 +126,38 @@ class ProjectController extends BaseController
             'customer_id' => 'required|exists:customers,id',
             'name' => 'required|string|max:255',
             'website_url' => 'required|url|max:255',
-            'description' => 'required|string',
             'status' => 'required|in:active,paused,completed',
             'start_date' => 'required|date',
-            'details' => 'required|json',
+            'details' => [
+                'required',
+                function ($attribute, $value, $fail) {
+                    try {
+                        $content = json_decode($value, true);
+                        if (!is_array($content) || !isset($content['content']) || !isset($content['plainText'])) {
+                            $fail('The details format is invalid.');
+                        }
+                        if (empty($content['plainText'])) {
+                            $fail('The details cannot be empty.');
+                        }
+                    } catch (\Exception $e) {
+                        $fail('The details format is invalid.');
+                    }
+                },
+            ],
             'logo' => 'nullable|image|max:10240',
         ]);
 
-        $project->update($validated);
+        // Handle details as JSON
+        $details = json_decode($validated['details'], true);
+
+        $project->update([
+            'customer_id' => $validated['customer_id'],
+            'name' => $validated['name'],
+            'website_url' => $validated['website_url'],
+            'status' => $validated['status'],
+            'start_date' => $validated['start_date'],
+            'details' => $details,
+        ]);
 
         if ($request->hasFile('logo')) {
             $project->clearMediaCollection('logo');
