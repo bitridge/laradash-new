@@ -4,7 +4,6 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\SeoLogController;
-use App\Http\Controllers\SeoReportController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\DashboardController;
@@ -58,7 +57,6 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('seo-logs', SeoLogController::class);
         Route::delete('seo-logs/{seoLog}/attachments/{mediaId}', [SeoLogController::class, 'deleteAttachment'])
             ->name('seo-logs.delete-attachment');
-        Route::resource('seo-reports', SeoReportController::class);
         Route::resource('reports', ReportController::class);
         Route::get('reports/{report}/pdf', [ReportController::class, 'generatePdf'])->name('reports.pdf');
     });

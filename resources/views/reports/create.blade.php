@@ -8,13 +8,15 @@ use App\Models\Report;
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Generate Report') }}
             </h2>
-            <a href="{{ route('projects.show', request('project_id')) }}" 
-               class="inline-flex items-center px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md font-semibold text-sm transition-colors duration-200">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
-                </svg>
-                {{ __('Back to Project') }}
-            </a>
+            @if(request('project_id'))
+                <a href="{{ route('projects.show', request('project_id')) }}" 
+                   class="inline-flex items-center px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md font-semibold text-sm transition-colors duration-200">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+                    </svg>
+                    {{ __('Back to Project') }}
+                </a>
+            @endif
         </div>
     </x-slot>
 
@@ -24,7 +26,23 @@ use App\Models\Report;
                 <div class="p-6">
                     <form action="{{ route('reports.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
                         @csrf
-                        <input type="hidden" name="project_id" value="{{ request('project_id') }}">
+
+                        @if(request('project_id'))
+                            <input type="hidden" name="project_id" value="{{ request('project_id') }}">
+                        @else
+                            <div class="mb-4">
+                                <x-input-label for="project_id" :value="__('Project')" />
+                                <select name="project_id" id="project_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
+                                    <option value="">{{ __('Select a project') }}</option>
+                                    @foreach($projects as $project)
+                                        <option value="{{ $project->id }}" {{ old('project_id') == $project->id ? 'selected' : '' }}>
+                                            {{ $project->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <x-input-error class="mt-2" :messages="$errors->get('project_id')" />
+                            </div>
+                        @endif
 
                         <!-- Basic Information -->
                         <div>
@@ -32,16 +50,15 @@ use App\Models\Report;
                             <div class="grid grid-cols-1 gap-6">
                                 <div>
                                     <x-input-label for="title" :value="__('Report Title')" />
-                                    <x-text-input id="title" name="title" type="text" class="mt-1 block w-full" required />
+                                    <x-text-input id="title" name="title" type="text" class="mt-1 block w-full" :value="old('title')" required />
                                     <x-input-error class="mt-2" :messages="$errors->get('title')" />
                                 </div>
 
                                 <div>
                                     <x-input-label for="description" :value="__('Report Description')" />
-                                    <div id="description-editor" class="mt-1 block w-full min-h-[200px] bg-white">
-                                        {!! old('description.content') ?? '' !!}
-                                    </div>
-                                    <input type="hidden" name="description" id="description-input">
+                                    <textarea id="description" name="description" rows="6" 
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                        required>{{ old('description') }}</textarea>
                                     <x-input-error class="mt-2" :messages="$errors->get('description')" />
                                 </div>
                             </div>
@@ -65,27 +82,29 @@ use App\Models\Report;
                         </div>
 
                         <!-- SEO Logs Selection -->
-                        <div>
-                            <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('Include SEO Logs') }}</h3>
-                            <div class="space-y-4">
-                                @foreach($seoLogs as $log)
-                                    <div class="flex items-start">
-                                        <div class="flex items-center h-5">
-                                            <input type="checkbox" name="seo_logs[]" value="{{ $log->id }}" 
-                                                   class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        @if($seoLogs->isNotEmpty())
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('Include SEO Logs') }}</h3>
+                                <div class="space-y-4">
+                                    @foreach($seoLogs as $log)
+                                        <div class="flex items-start">
+                                            <div class="flex items-center h-5">
+                                                <input type="checkbox" name="seo_log_ids[]" value="{{ $log->id }}" 
+                                                       class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                            </div>
+                                            <div class="ml-3">
+                                                <label class="text-sm font-medium text-gray-700">
+                                                    {{ $log->title }}
+                                                    <span class="text-sm text-gray-500">
+                                                        ({{ $log->date->format('M j, Y') }} - {{ $log->log_type }})
+                                                    </span>
+                                                </label>
+                                            </div>
                                         </div>
-                                        <div class="ml-3">
-                                            <label class="text-sm font-medium text-gray-700">
-                                                {{ $log->title }}
-                                                <span class="text-sm text-gray-500">
-                                                    ({{ $log->date->format('M j, Y') }} - {{ $log->log_type }})
-                                                </span>
-                                            </label>
-                                        </div>
-                                    </div>
-                                @endforeach
+                                    @endforeach
+                                </div>
                             </div>
-                        </div>
+                        @endif
 
                         <div class="flex justify-end">
                             <x-primary-button>
@@ -98,58 +117,13 @@ use App\Models\Report;
         </div>
     </div>
 
-    @push('styles')
-        <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-        <style>
-            .ql-editor {
-                min-height: 200px;
-                background-color: white;
-            }
-            .ql-container {
-                border: 1px solid #d1d5db;
-                border-top: none;
-                border-bottom-left-radius: 0.375rem;
-                border-bottom-right-radius: 0.375rem;
-            }
-            .ql-toolbar {
-                border: 1px solid #d1d5db;
-                border-top-left-radius: 0.375rem;
-                border-top-right-radius: 0.375rem;
-                background-color: white;
-            }
-        </style>
-    @endpush
-
     @push('scripts')
-        <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
         <script>
-            // Initialize Quill editor for description
-            let descriptionQuill = null;
-            let sectionQuills = {};
             let sectionCount = 0;
 
-            // Function to initialize a Quill editor
-            function initQuill(elementId, options = {}) {
-                return new Quill(elementId, {
-                    theme: 'snow',
-                    modules: {
-                        toolbar: [
-                            [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-                            ['bold', 'italic', 'underline', 'strike'],
-                            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                            [{ 'color': [] }, { 'background': [] }],
-                            ['link', 'image', 'code-block'],
-                            ['clean']
-                        ],
-                        ...options
-                    },
-                    placeholder: 'Start writing here...'
-                });
-            }
-
             document.addEventListener('DOMContentLoaded', function() {
-                // Initialize description editor
-                descriptionQuill = initQuill('#description-editor');
+                // Add initial section
+                addSection();
 
                 // Function to add a new section
                 window.addSection = function() {
@@ -175,8 +149,9 @@ use App\Models\Report;
                             </div>
                             <div>
                                 <x-input-label :value="__('Content')" />
-                                <div id="section-editor-${sectionCount}" class="mt-1 block w-full min-h-[200px] bg-white"></div>
-                                <input type="hidden" name="sections[${sectionCount}][content]" id="section-content-${sectionCount}">
+                                <textarea name="sections[${sectionCount}][content]" rows="6" 
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                    required></textarea>
                             </div>
                             <div class="mt-4">
                                 <x-input-label :value="__('Section Image (Optional)')" />
@@ -188,9 +163,6 @@ use App\Models\Report;
                     const tempDiv = document.createElement('div');
                     tempDiv.innerHTML = sectionHtml;
                     container.appendChild(tempDiv.firstElementChild);
-
-                    // Initialize Quill editor for the new section
-                    sectionQuills[sectionId] = initQuill(`#section-editor-${sectionCount}`);
                     sectionCount++;
                 };
 
@@ -198,102 +170,49 @@ use App\Models\Report;
                 window.removeSection = function(sectionId) {
                     const section = document.getElementById(sectionId);
                     if (section) {
-                        // Destroy Quill instance if it exists
-                        if (sectionQuills[sectionId]) {
-                            delete sectionQuills[sectionId];
-                        }
                         section.remove();
                     }
                 };
 
                 // Handle form submission
                 document.querySelector('form').addEventListener('submit', function(e) {
-                    e.preventDefault();
+                    // Check if at least one section exists
+                    const sections = document.querySelectorAll('[id^="section-"]');
+                    if (sections.length === 0) {
+                        e.preventDefault();
+                        alert('Please add at least one section to the report');
+                        return false;
+                    }
 
-                    try {
-                        // Store description content
-                        if (descriptionQuill) {
-                            const descriptionContent = descriptionQuill.root.innerHTML.trim();
-                            const descriptionPlainText = descriptionQuill.getText().trim();
-                            
-                            if (!descriptionPlainText) {
-                                alert('Please enter a report description');
-                                return;
-                            }
+                    // Check if all required fields are filled
+                    const title = document.getElementById('title').value.trim();
+                    const description = document.getElementById('description').value.trim();
+                    const projectId = document.querySelector('input[name="project_id"]')?.value || document.getElementById('project_id')?.value;
 
-                            // Set the description input value
-                            const descriptionData = {
-                                content: descriptionContent,
-                                plainText: descriptionPlainText
-                            };
-                            document.getElementById('description-input').value = JSON.stringify(descriptionData);
-                        } else {
-                            alert('Error: Description editor not initialized');
-                            return;
+                    if (!title || !description || !projectId) {
+                        e.preventDefault();
+                        alert('Please fill in all required fields');
+                        return false;
+                    }
+
+                    // Check if all section fields are filled
+                    let allSectionsFilled = true;
+                    sections.forEach(section => {
+                        const title = section.querySelector('input[name$="[title]"]').value.trim();
+                        const content = section.querySelector('textarea[name$="[content]"]').value.trim();
+                        const order = section.querySelector('input[name$="[order]"]').value.trim();
+
+                        if (!title || !content || !order) {
+                            allSectionsFilled = false;
                         }
+                    });
 
-                        // Check if at least one section exists
-                        const sections = document.querySelectorAll('[id^="section-"]');
-                        if (sections.length === 0) {
-                            alert('Please add at least one section to the report');
-                            return;
-                        }
-
-                        // Store section contents
-                        let hasError = false;
-                        sections.forEach(section => {
-                            const sectionId = section.id;
-                            const sectionNum = sectionId.split('-')[1];
-                            const quill = sectionQuills[sectionId];
-                            const contentInput = document.getElementById(`section-content-${sectionNum}`);
-                            
-                            if (quill && contentInput) {
-                                const content = quill.root.innerHTML.trim();
-                                const plainText = quill.getText().trim();
-                                
-                                if (!plainText) {
-                                    alert(`Please enter content for section ${parseInt(sectionNum) + 1}`);
-                                    hasError = true;
-                                    return;
-                                }
-
-                                contentInput.value = content;
-                            }
-                        });
-
-                        if (hasError) {
-                            return;
-                        }
-
-                        // Submit the form
-                        this.submit();
-                    } catch (error) {
-                        console.error('Form submission error:', error);
-                        alert('An error occurred while submitting the form. Please try again.');
+                    if (!allSectionsFilled) {
+                        e.preventDefault();
+                        alert('Please fill in all section fields');
+                        return false;
                     }
                 });
-
-                // Add initial section automatically
-                addSection();
-
-                // Load old content if it exists
-                @if(old('description'))
-                    try {
-                        const oldContent = @json(old('description'));
-                        if (oldContent && descriptionQuill) {
-                            if (typeof oldContent === 'string') {
-                                const parsedContent = JSON.parse(oldContent);
-                                if (parsedContent.content) {
-                                    descriptionQuill.root.innerHTML = parsedContent.content;
-                                }
-                            } else if (oldContent.content) {
-                                descriptionQuill.root.innerHTML = oldContent.content;
-                            }
-                        }
-                    } catch (e) {
-                        console.error('Error loading old content:', e);
-                    }
-                @endif
             });
         </script>
     @endpush

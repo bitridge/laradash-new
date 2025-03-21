@@ -70,31 +70,22 @@ class ReportManagementTest extends TestCase
         $reportData = [
             'project_id' => $this->project->id,
             'title' => 'Comprehensive SEO Report',
-            'description' => [
-                'content' => '<h1>Executive Summary</h1><p>This is a detailed SEO report with <strong>multiple sections</strong>.</p>',
-                'plainText' => 'Executive Summary This is a detailed SEO report with multiple sections.'
-            ],
+            'description' => 'Executive Summary: This is a detailed SEO report with multiple sections.',
             'sections' => [
                 [
                     'title' => 'Technical Analysis',
-                    'content' => [
-                        'content' => '<h2>Technical Findings</h2><ul><li>Site Speed: Excellent</li><li>Mobile Optimization: Good</li></ul>',
-                        'plainText' => 'Technical Findings Site Speed: Excellent Mobile Optimization: Good'
-                    ],
+                    'content' => 'Technical Findings: Site Speed: Excellent, Mobile Optimization: Good',
                     'order' => 1,
                     'image' => $image1
                 ],
                 [
                     'title' => 'Content Strategy',
-                    'content' => [
-                        'content' => '<h2>Content Recommendations</h2><p>Key improvements needed in content structure.</p>',
-                        'plainText' => 'Content Recommendations Key improvements needed in content structure.'
-                    ],
+                    'content' => 'Content Recommendations: Key improvements needed in content structure.',
                     'order' => 2,
                     'image' => $image2
                 ]
             ],
-            'seo_logs' => [$this->seoLog->id]
+            'seo_log_ids' => [$this->seoLog->id]
         ];
 
         $response = $this->actingAs($this->seoProvider)
@@ -112,7 +103,7 @@ class ReportManagementTest extends TestCase
         // Description assertions
         $this->assertArrayHasKey('content', $report->description);
         $this->assertArrayHasKey('plainText', $report->description);
-        $this->assertStringContainsString('Executive Summary', $report->description['content']);
+        $this->assertStringContainsString('Executive Summary', $report->description['plainText']);
         
         // Sections assertions
         $this->assertCount(2, $report->sections);
@@ -120,13 +111,13 @@ class ReportManagementTest extends TestCase
         // Check first section
         $section1 = $report->sections()->where('order', 1)->first();
         $this->assertEquals('Technical Analysis', $section1->title);
-        $this->assertStringContainsString('Technical Findings', $section1->content['content']);
+        $this->assertStringContainsString('Technical Findings', $section1->content['plainText']);
         $this->assertNotNull($section1->image_path);
         
         // Check second section
         $section2 = $report->sections()->where('order', 2)->first();
         $this->assertEquals('Content Strategy', $section2->title);
-        $this->assertStringContainsString('Content Recommendations', $section2->content['content']);
+        $this->assertStringContainsString('Content Recommendations', $section2->content['plainText']);
         $this->assertNotNull($section2->image_path);
         
         // SEO logs assertions

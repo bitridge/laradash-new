@@ -89,7 +89,7 @@ class ReportController extends Controller
             'sections' => 'required|array|min:1',
             'sections.*.title' => 'required|string|max:255',
             'sections.*.content' => 'required|string',
-            'sections.*.order' => 'required|integer|min:0',
+            'sections.*.order' => 'required|integer|min:1',
             'sections.*.image' => 'nullable|image|max:2048',
             'seo_log_ids' => 'nullable|array',
             'seo_log_ids.*' => 'exists:seo_logs,id'
@@ -101,22 +101,21 @@ class ReportController extends Controller
         try {
             DB::beginTransaction();
 
-            // Parse the description JSON
-            $description = json_decode($validated['description'], true);
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new \Exception('Invalid description format');
-            }
-
+            // Create the report
             $report = Report::create([
                 'project_id' => $validated['project_id'],
                 'title' => $validated['title'],
-                'description' => $description,
+                'description' => [
+                    'content' => $validated['description'],
+                    'plainText' => strip_tags($validated['description'])
+                ],
                 'generated_by' => auth()->id(),
                 'generated_at' => now(),
             ]);
 
+            // Create report sections
             foreach ($validated['sections'] as $sectionData) {
-                $section = $report->sections()->create([
+                $report->sections()->create([
                     'title' => $sectionData['title'],
                     'content' => [
                         'content' => $sectionData['content'],
@@ -125,12 +124,14 @@ class ReportController extends Controller
                     'order' => $sectionData['order']
                 ]);
 
-                if (isset($sectionData['image']) && $sectionData['image']) {
+                if (isset($sectionData['image']) && $sectionData['image'] instanceof UploadedFile) {
+                    $section = $report->sections()->latest()->first();
                     $section->image_path = $sectionData['image']->store('report-sections', 'public');
                     $section->save();
                 }
             }
 
+            // Attach SEO logs if provided
             if (!empty($validated['seo_log_ids'])) {
                 $report->seoLogs()->attach($validated['seo_log_ids']);
             }
@@ -141,8 +142,14 @@ class ReportController extends Controller
                 ->with('success', 'Report created successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Failed to create report: ' . $e->getMessage(), [
+                'user_id' => auth()->id(),
+                'project_id' => $validated['project_id'],
+                'error' => $e->getMessage()
+            ]);
+            
             return back()->withInput()
-                ->with('error', 'Failed to create report. ' . $e->getMessage());
+                ->with('error', 'Failed to create report. Please try again.');
         }
     }
 
